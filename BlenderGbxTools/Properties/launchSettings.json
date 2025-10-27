@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BlenderGbxTools": {
+      "commandName": "Project",
+      "commandLineArgs": "D:\\GbxTools\\Dataset\\TMT\\CanyonCE\\Media\\Solid\\CE\\Crane\\PlatformAir.Solid.Gbx"
+    }
+  }
+}
