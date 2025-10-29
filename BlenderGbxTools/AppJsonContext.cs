@@ -5,5 +5,5 @@ namespace BlenderGbxTools;
 
 [JsonSerializable(typeof(Solid))]
 [JsonSerializable(typeof(BlockInfo))]
-[JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, GenerationMode = JsonSourceGenerationMode.Metadata)]
+[JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, GenerationMode = JsonSourceGenerationMode.Metadata, UseStringEnumConverter = true)]
 internal sealed partial class AppJsonContext : JsonSerializerContext;

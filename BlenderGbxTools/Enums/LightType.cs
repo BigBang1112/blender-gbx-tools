@@ -2,6 +2,6 @@
 
 internal enum LightType
 {
-    Point,
-    Spot
+    POINT,
+    SPOT
 }

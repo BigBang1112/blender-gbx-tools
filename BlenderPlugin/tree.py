@@ -6,6 +6,7 @@ import math
 import mathutils
 
 from . import visual
+from . import light
 
 def create(dict, material_set_dict, hide=False):
     name = dict.get("Name")
@@ -24,12 +25,16 @@ def create(dict, material_set_dict, hide=False):
     if visual_dict is not None:
         object_data = visual.create(visual_dict, name)
     
+    # CPlugTreeLight
+    if light_dict is not None:
+        object_data = light.create(light_dict, name)
+    
     # make object from mesh
     object = bpy.data.objects.new(name, object_data)
     object["Name"] = name; # Custom property
 
-    # CPlugTree.Shader
-    if material is not None and object_data is not None:
+    # CPlugTree.Shader - only apply materials to visual objects (meshes)
+    if material is not None and visual_dict is not None:
         mat = material_set_dict.get(material)
         if object.data.materials: # assign to 1st material slot
             object.data.materials[0] = mat
@@ -69,7 +74,7 @@ def create(dict, material_set_dict, hide=False):
 def apply_location(object, location):
     trans_bytes = binascii.a2b_base64(location)
     iso4 = array.array('f', trans_bytes)
-    object.location = (iso4[9], iso4[11], iso4[10])
+    object.location = (iso4[9], -iso4[11], iso4[10])
     object.scale = (
         math.sqrt(iso4[0]**2+iso4[3]**2+iso4[6]**2),
         math.sqrt(iso4[2]**2+iso4[5]**2+iso4[8]**2),

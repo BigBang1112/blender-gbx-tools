@@ -7,9 +7,14 @@ namespace BlenderGbxTools.Models;
 internal sealed class Light
 {
     public LightType Type { get; }
+    public float R { get; }
+    public float G { get; }
+    public float B { get; }
     public float Intensity { get; }
-    public float? SpotSize { get; }
-    public float? SpotBlend { get; }
+    public float? Radius { get; }
+    public float? AngleInner { get; }
+    public float? AngleOuter { get; }
+    public bool NightOnly { get; }
 
     public Light()
     {
@@ -18,27 +23,41 @@ internal sealed class Light
 
     public Light(CPlugTreeLight treeLight)
     {
-        var gxLight = treeLight.PlugLight?.Light;
+        if (treeLight.PlugLight is not CPlugLight plugLight)
+        {
+            return;
+        }
 
+        NightOnly = plugLight.NightOnly;
+
+        var gxLight = plugLight.Light;
+        
         if (gxLight is null)
         {
             return;
         }
 
+        R = gxLight.Color.X;
+        G = gxLight.Color.Y;
+        B = gxLight.Color.Z;
         Intensity = gxLight.Intensity;
 
-        switch (gxLight)
+        if (gxLight is GxLightPoint point)
         {
-            case GxLightSpot spot:
-                Type = LightType.Spot;
-                SpotSize = spot.AngleOuter;
-                SpotBlend = 1 - spot.AngleInner / spot.AngleOuter;
-                break;
-            case GxLightBall ball:
-                break;
-            case GxLightPoint point:
-                Type = LightType.Point;
-                break;
+            Type = LightType.POINT;
+        }
+
+        if (gxLight is GxLightBall ball)
+        {
+            Radius = ball.Radius;
+        }
+
+        if (gxLight is GxLightSpot spot)
+        {
+            Type = LightType.SPOT;
+            AngleInner = spot.AngleInner;
+            AngleOuter = spot.AngleOuter;
+
         }
     }
 }
