@@ -12,6 +12,7 @@ def create_multiple(material_set_dict):
         mat = bpy.data.materials.new(material_name)
         mat.use_nodes = True
         mat["SurfaceId"] = material_dict.get("SurfaceId")
+        mat["Shader"] = material_dict.get("Shader")
 
         textures_dict = material_dict.get("Textures")
 

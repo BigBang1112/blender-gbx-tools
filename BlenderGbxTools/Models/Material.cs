@@ -1,4 +1,5 @@
-﻿using GBX.NET.Engines.Plug;
+﻿using BlenderGbxTools.Extensions;
+using GBX.NET.Engines.Plug;
 using System.Collections.Immutable;
 
 namespace BlenderGbxTools.Models;
@@ -7,6 +8,7 @@ internal sealed class Material
 {
     public ImmutableDictionary<string, Texture>? Textures { get; }
     public string? SurfaceId { get; }
+    public string? Shader { get; }
 
     public Material()
     {
@@ -44,5 +46,6 @@ internal sealed class Material
 
         Textures = textures.ToImmutable();
         SurfaceId = material.SurfaceId.ToString();
+        Shader = material.GetShaderName();
     }
 }

@@ -113,7 +113,7 @@ def menu_func_import_item(self, context):
     self.layout.operator(ImportItemGbx.bl_idname, text="Item (.Item.Gbx)")
 
 def menu_func_import_blockinfo(self, context):
-    self.layout.operator(ImportBlockInfoGbx.bl_idname, text="Block (.*ED*.Gbx)")
+    self.layout.operator(ImportBlockInfoGbx.bl_idname, text="Block (.TM/ED*.Gbx)")
 
 
 # Registration
