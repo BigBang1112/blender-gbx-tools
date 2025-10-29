@@ -7,8 +7,9 @@ import mathutils
 
 from . import visual
 from . import light
+from . import surface
 
-def create(dict, material_set_dict, hide=False):
+def create(dict, material_set_dict, surface_material_set_list, hide=False):
     name = dict.get("Name")
     children = dict.get("Children")
     visual_dict = dict.get("Visual")
@@ -29,9 +30,10 @@ def create(dict, material_set_dict, hide=False):
     if light_dict is not None:
         object_data = light.create(light_dict, name)
     
-    # make object from mesh
+    # make object from mesh or light data
     object = bpy.data.objects.new(name, object_data)
     object["Name"] = name; # Custom property
+    object["Flags"] = flags; # Custom property
 
     # CPlugTree.Shader - only apply materials to visual objects (meshes)
     if material is not None and visual_dict is not None:
@@ -40,7 +42,15 @@ def create(dict, material_set_dict, hide=False):
             object.data.materials[0] = mat
         else: # no slots
             object.data.materials.append(mat)
-    
+
+    # CPlugTree.Surface
+    if surface_dict is not None:
+        surface_name = name + ".Surface"
+        surface_object = surface.create(surface_dict, surface_name, surface_material_set_list)  
+        if surface_object is not None:
+            surface_object.parent = object
+            surface_object.hide_set(True)
+
     # LINK OBJECT TO SCENE
     bpy.context.collection.objects.link(object)
 
@@ -51,7 +61,7 @@ def create(dict, material_set_dict, hide=False):
     # CPlugTree children
     if children is not None:
         for child in children:
-            create(child, material_set_dict, hide).parent = object
+            create(child, material_set_dict, surface_material_set_list, hide).parent = object
     
     object.select_set(True)
     object.hide_set(hide)
@@ -64,7 +74,7 @@ def create(dict, material_set_dict, hide=False):
                 first = False
             else:
                 hide = True
-            mip_object = create(level, material_set_dict, hide)
+            mip_object = create(level, material_set_dict, surface_material_set_list, hide)
             mip_object["Distance"] = float(distance)
             mip_object.name = f"{name} (LOD {distance})"
             mip_object.parent = object

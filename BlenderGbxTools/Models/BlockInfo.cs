@@ -12,6 +12,7 @@ internal sealed class BlockInfo : IStandalone
     public BlockInfoVariant? VariantGround { get; }
 
     public ImmutableDictionary<string, Material>? Materials { get; }
+    public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; }
 
     public double ExecutionTimeInSeconds { get; }
 
@@ -36,6 +37,7 @@ internal sealed class BlockInfo : IStandalone
 
         // Materials not in this dictionary use the default material
         Materials = standalone ? blockInfo.GetAllMaterials() : null;
+        SurfaceMaterials = standalone ? blockInfo.GetAllSurfaceMaterials() : null;
 
         ExecutionTimeInSeconds = Stopwatch.GetElapsedTime(startTime).TotalSeconds;
     }

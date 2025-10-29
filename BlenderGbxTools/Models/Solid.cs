@@ -11,6 +11,7 @@ internal sealed class Solid : IStandalone
     public Tree? Tree { get; }
 
     public ImmutableDictionary<string, Material>? Materials { get; }
+    public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; }
 
     public double ExecutionTimeInSeconds { get; }
 
@@ -28,6 +29,7 @@ internal sealed class Solid : IStandalone
 
         // Materials not in this dictionary use the default material
         Materials = standalone ? solid.GetAllMaterials() : null;
+        SurfaceMaterials = standalone ? solid.GetAllSurfaceMaterials() : null;
 
         ExecutionTimeInSeconds = Stopwatch.GetElapsedTime(startTime).TotalSeconds;
     }

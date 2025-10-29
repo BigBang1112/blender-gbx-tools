@@ -8,7 +8,8 @@ internal sealed class Surface
     public Vec3? Ellipsoid { get; }
     public float? Sphere { get; }
     public byte[]? Positions { get; }
-    public byte[]? Indices { get; }
+    public int[]? Indices { get; }
+    public int? SurfaceIndex { get; }
 
     public Surface()
     {
@@ -19,20 +20,18 @@ internal sealed class Surface
     {
         var surf = surface.Geom?.Surf ?? surface.Surf;
 
-        var ell = default(Vec3?);
         if (surf is CPlugSurface.Ellipsoid ellipsoid)
         {
-            ell = ellipsoid.Size;
+            Ellipsoid = ellipsoid.Size;
+            SurfaceIndex = ellipsoid.U02;
         }
 
-        var sph = default(float?);
         if (surf is CPlugSurface.Sphere sphere)
         {
-            sph = sphere.Size;
+            Sphere = sphere.Size;
+            SurfaceIndex = sphere.U02;
         }
 
-        var pos = default(byte[]);
-        var ind = default(byte[]);
         if (surf is CPlugSurface.Mesh mesh)
         {
             using var posStream = new MemoryStream();
@@ -45,24 +44,48 @@ internal sealed class Surface
                 posWriter.Write(vertex.Z);
             }
 
-            pos = posStream.ToArray();
+            Positions = posStream.ToArray();
 
-            using var indStream = new MemoryStream();
-            using var indWriter = new BinaryWriter(indStream);
-
-            foreach (var tri in mesh.CookedTriangles ?? [])
+            if (mesh.CookedTriangles is not null)
             {
-                indWriter.Write((ushort)tri.U02.X);
-                indWriter.Write((ushort)tri.U02.Y);
-                indWriter.Write((ushort)tri.U02.Z);
+                if (mesh.CookedTriangles.Length > ushort.MaxValue)
+                {
+                    throw new Exception($"Mesh has too many triangles for ushort indices ({mesh.CookedTriangles.Length} > {ushort.MaxValue})");
+                }
+
+                var inds = new int[mesh.CookedTriangles.Length * 4];
+
+                for (var i = 0; i < mesh.CookedTriangles.Length; i++)
+                {
+                    var tri = mesh.CookedTriangles[i];
+                    inds[i * 4 + 0] = tri.U03;
+                    inds[i * 4 + 1] = tri.U02.X;
+                    inds[i * 4 + 2] = tri.U02.Y;
+                    inds[i * 4 + 3] = tri.U02.Z;
+                }
+
+                Indices = inds;
             }
+            else if (mesh.Triangles is not null)
+            {
+                if (mesh.Triangles.Length > ushort.MaxValue)
+                {
+                    throw new Exception($"Mesh has too many triangles for ushort indices ({mesh.Triangles.Length} > {ushort.MaxValue})");
+                }
 
-            ind = indStream.ToArray();
+                var inds = new int[mesh.Triangles.Length * 4];
+
+                for (var i = 0; i < mesh.Triangles.Length; i++)
+                {
+                    var tri = mesh.Triangles[i];
+                    inds[i * 4 + 0] = tri.U04;
+                    inds[i * 4 + 1] = tri.U01.X;
+                    inds[i * 4 + 2] = tri.U01.Y;
+                    inds[i * 4 + 3] = tri.U01.Z;
+                }
+
+                Indices = inds;
+            }
         }
-
-        Ellipsoid = ell;
-        Sphere = sph;
-        Positions = pos;
-        Indices = ind;
     }
 }

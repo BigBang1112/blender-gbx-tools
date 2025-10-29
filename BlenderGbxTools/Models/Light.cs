@@ -57,7 +57,6 @@ internal sealed class Light
             Type = LightType.SPOT;
             AngleInner = spot.AngleInner;
             AngleOuter = spot.AngleOuter;
-
         }
     }
 }

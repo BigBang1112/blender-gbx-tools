@@ -5,9 +5,10 @@ from . import solid
 
 def create(dict):
     material_set_dict = material.create_multiple(dict.get("Materials"))
+    surface_material_set_list = material.create_surface_multiple(dict.get("SurfaceMaterials"))
 
-    air_object = create_variant("Air", dict.get("VariantAir"), material_set_dict)
-    ground_object = create_variant("Ground", dict.get("VariantGround"), material_set_dict)
+    air_object = create_variant("Air", dict.get("VariantAir"), material_set_dict, surface_material_set_list)
+    ground_object = create_variant("Ground", dict.get("VariantGround"), material_set_dict, surface_material_set_list)
 
     root_object = bpy.data.objects.new(dict["Name"], None)
 
@@ -18,7 +19,7 @@ def create(dict):
 
     bpy.context.collection.objects.link(root_object)
 
-def create_variant(name, variant_dict, material_set_dict):
+def create_variant(name, variant_dict, material_set_dict, surface_material_set_list):
     if variant_dict is None:
         return None
 
@@ -39,7 +40,7 @@ def create_variant(name, variant_dict, material_set_dict):
 
             solid_dict = mobil_dict.get("Solid")
             if solid_dict is not None:
-                solid_object = solid.create(solid_dict, material_set_dict)
+                solid_object = solid.create(solid_dict, material_set_dict, surface_material_set_list)
                 solid_object.parent = submobil_object
 
     return variant_object

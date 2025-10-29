@@ -1,5 +1,7 @@
 import bpy
 
+import random
+
 from . import texture
 
 def create_multiple(material_set_dict):
@@ -27,6 +29,46 @@ def create_multiple(material_set_dict):
                 tex_index += 1
 
         materials[material_name] = mat
+
+    return materials
+
+def create_surface_multiple(surface_material_set_list):
+    if surface_material_set_list is None:
+        return None
+
+    materials = []
+
+    for material in surface_material_set_list:
+        material_name = material.get("Name", material.get("SurfaceId")) + ".Surface"
+        surface_id = material.get("SurfaceId")
+        if surface_id is None:
+            surface_id = material["Material"].get("SurfaceId")
+
+        mat = bpy.data.materials.new(material_name)
+        mat.use_nodes = True
+        mat["SurfaceId"] = surface_id
+
+        # Enable wireframe display
+        mat.use_backface_culling = False
+        
+        # Set up wireframe material with random color
+        random_color = (random.random(), random.random(), random.random(), 1.0)
+        
+        # Get the principled BSDF node
+        bsdf = mat.node_tree.nodes["Principled BSDF"]
+        bsdf.inputs["Base Color"].default_value = random_color
+        bsdf.inputs["Metallic"].default_value = 0.0
+        bsdf.inputs["Roughness"].default_value = 0.8
+        
+        # Add wireframe node
+        wireframe_node = mat.node_tree.nodes.new("ShaderNodeWireframe")
+        wireframe_node.location = (-400, 0)
+        wireframe_node.inputs["Size"].default_value = 0.5  # Wireframe thickness
+        
+        # Connect Fac to Alpha of BSDF
+        mat.node_tree.links.new(bsdf.inputs["Alpha"], wireframe_node.outputs["Fac"])
+
+        materials.append(mat)
 
     return materials
 

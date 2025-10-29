@@ -7,7 +7,7 @@ namespace BlenderGbxTools.Models;
 internal sealed class Material
 {
     public ImmutableDictionary<string, Texture>? Textures { get; }
-    public string? SurfaceId { get; }
+    public CPlugSurface.MaterialId SurfaceId { get; }
     public string? Shader { get; }
 
     public Material()
@@ -45,7 +45,7 @@ internal sealed class Material
         }
 
         Textures = textures.ToImmutable();
-        SurfaceId = material.SurfaceId.ToString();
+        SurfaceId = material.SurfaceId;
         Shader = material.GetShaderName();
     }
 }
