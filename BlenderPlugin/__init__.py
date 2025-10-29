@@ -24,9 +24,12 @@ bl_info = {
 }
 
 from . import import_gbx
+from . import export_meshparams
 
 def register():
     import_gbx.register()
+    export_meshparams.register()
 
 def unregister():
     import_gbx.unregister()
+    export_meshparams.unregister()
