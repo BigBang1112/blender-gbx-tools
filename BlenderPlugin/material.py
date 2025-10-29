@@ -34,8 +34,8 @@ def create_texture(texture_name, texture_dict, mat):
     
     if texture_name == "Diffuse":
         apply_diffuse_map(mat, texture_node)
-    elif texture_name == "Normal":
-        apply_normal_map(mat, texture_node)
+    #elif texture_name == "Normal":
+    #    apply_normal_map(mat, texture_node)
 
     return texture_node
 
