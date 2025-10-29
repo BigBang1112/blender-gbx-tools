@@ -1,12 +1,17 @@
 import bpy
 
+import array
+import binascii
+import math
+import mathutils
+
 from . import visual
 
 def create(dict, material_set_dict, hide=False):
     name = dict.get("Name")
     children = dict.get("Children")
     visual_dict = dict.get("Visual")
-    translation = dict.get("Translation")
+    location = dict.get("Location")
     visual_mip = dict.get("VisualMip")
     flags = dict.get("Flags")
     light_dict = dict.get("Light")
@@ -33,6 +38,10 @@ def create(dict, material_set_dict, hide=False):
     
     # LINK OBJECT TO SCENE
     bpy.context.collection.objects.link(object)
+
+    # CPlugTree.Location
+    if location is not None:
+        apply_location(object, location)
     
     # CPlugTree children
     if children is not None:
@@ -56,3 +65,22 @@ def create(dict, material_set_dict, hide=False):
             mip_object.parent = object
     
     return object
+
+def apply_location(object, location):
+    trans_bytes = binascii.a2b_base64(location)
+    iso4 = array.array('f', trans_bytes)
+    object.location = (iso4[9], iso4[11], iso4[10])
+    object.scale = (
+        math.sqrt(iso4[0]**2+iso4[3]**2+iso4[6]**2),
+        math.sqrt(iso4[2]**2+iso4[5]**2+iso4[8]**2),
+        math.sqrt(iso4[1]**2+iso4[4]**2+iso4[7]**2)
+    )
+    
+    rot_mat = mathutils.Matrix([
+        [iso4[0], iso4[1], iso4[2]],
+        [iso4[3], iso4[4], iso4[5]],
+        [iso4[6], iso4[7], iso4[8]],
+    ]).to_3x3()
+    
+    euler = rot_mat.to_euler()
+    object.rotation_euler = (-euler.x, euler.z, euler.y)

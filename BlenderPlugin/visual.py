@@ -30,17 +30,19 @@ def create(visual_dict, name):
     mesh.update(calc_edges=True)
     mesh.flip_normals()
 
-    normals_base64 = visual_dict["Normals"]
-    normals_bytes = binascii.a2b_base64(normals_base64)
-    normals_floats = array.array('f', normals_bytes)
+    normals_base64 = visual_dict.get("Normals")
     
-    # Transform normals with same coordinate system as vertices
-    vertex_normals = [
-        (normals_floats[i], -normals_floats[i+2], normals_floats[i+1])
-        for i in range(0, len(normals_floats), 3)
-    ]
+    if normals_base64:
+        normals_bytes = binascii.a2b_base64(normals_base64)
+        normals_floats = array.array('f', normals_bytes)
+
+        # Transform normals with same coordinate system as vertices
+        vertex_normals = [
+            (normals_floats[i], -normals_floats[i+2], normals_floats[i+1])
+            for i in range(0, len(normals_floats), 3)
+        ]
     
-    mesh.normals_split_custom_set_from_vertices(vertex_normals)
+        mesh.normals_split_custom_set_from_vertices(vertex_normals)
 
     counter = 0
     # make uv layers TODO rework for proper shader support

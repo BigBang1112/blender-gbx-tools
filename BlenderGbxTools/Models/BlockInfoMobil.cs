@@ -11,7 +11,7 @@ internal sealed class BlockInfoMobil
 
     public BlockInfoMobil(External<CSceneMobil> mobil)
     {
-        if (mobil.Node?.Item?.Solid is CPlugSolid solid)
+        if (mobil.Node?.Item?.Solid?.Tree is CPlugSolid solid)
         {
             var fileName = mobil.File is null ? Guid.NewGuid().ToString() : Path.GetFileName(mobil.File.GetFullPath());
             Solid = new Solid(fileName, solid, standalone: false);

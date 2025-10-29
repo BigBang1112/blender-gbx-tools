@@ -10,7 +10,7 @@ internal sealed class Tree
 {
     public string? Name { get; }
     public Visual? Visual { get; }
-    public byte[]? Translation { get; }
+    public byte[]? Location { get; }
     public ImmutableList<Tree>? Children { get; }
     public ulong? Flags { get; }
     public ImmutableDictionary<float, Tree>? VisualMip { get; }
@@ -55,7 +55,7 @@ internal sealed class Tree
 
         Name = tree.Name ?? "[unnamed]";
         Visual = visual;
-        Translation = LocationToByteArray(tree);
+        Location = LocationToByteArray(tree);
         Children = tree.Children.Count == 0 ? null : tree.Children.Select(x => new Tree(x)).ToImmutableList();
         VisualMip = mipDict;
         Flags = tree.Flags;
