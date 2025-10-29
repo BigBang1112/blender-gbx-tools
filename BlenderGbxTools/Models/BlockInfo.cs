@@ -1,16 +1,19 @@
-﻿using GBX.NET.Engines.Game;
+﻿using BlenderGbxTools.Extensions;
+using GBX.NET.Engines.Game;
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace BlenderGbxTools.Models;
 
 internal sealed class BlockInfo : IStandalone
 {
-    public string? Name { get; private set; }
-    public BlockInfoVariant? VariantAir { get; private set; }
-    public BlockInfoVariant? VariantGround { get; private set; }
+    public string? Name { get; }
+    public BlockInfoVariant? VariantAir { get; }
+    public BlockInfoVariant? VariantGround { get; }
 
-    public ImmutableDictionary<string, Material>? Materials { get; private set; }
-    public double ExecutionTimeInSeconds { get; private set; }
+    public ImmutableDictionary<string, Material>? Materials { get; }
+
+    public double ExecutionTimeInSeconds { get; }
 
     public BlockInfo()
     {
@@ -19,14 +22,21 @@ internal sealed class BlockInfo : IStandalone
 
     public BlockInfo(CGameCtnBlockInfo blockInfo, bool standalone = true)
     {
+        var startTime = Stopwatch.GetTimestamp();
+
         Name = blockInfo.Ident.Id;
-        /*AirVariants = GetVariantsFromMobils("Air", blockInfo.AirMobils).ToArray(),
-        GroundVariants = GetVariantsFromMobils("Ground", blockInfo.GroundMobils).ToArray(),
-        AirUnits = GetUnitsFromBlockInfo(blockInfo.AirBlockUnitInfos),
-        GroundUnits = GetUnitsFromBlockInfo(blockInfo.GroundBlockUnitInfos),
-        Materials = standalone ? GetAllSolids(blockInfo)
-            .SelectMany(x => x.Tree is null ? Enumerable.Empty<Material>() : Solid.ScanMaterials((CPlugTree)x.Tree))
-            .DistinctBy(x => x.Name)
-            .ToDictionary(x => x.Name!) : null*/
+
+        VariantAir = blockInfo.VariantBaseAir is null
+            ? new BlockInfoVariant(blockInfo.AirMobils ?? [], blockInfo.AirBlockUnitInfos ?? [])
+            : new BlockInfoVariant(blockInfo.VariantBaseAir);
+
+        VariantGround = blockInfo.VariantBaseGround is null
+            ? new BlockInfoVariant(blockInfo.GroundMobils ?? [], blockInfo.GroundBlockUnitInfos ?? [])
+            : new BlockInfoVariant(blockInfo.VariantBaseGround);
+
+        // Materials not in this dictionary use the default material
+        Materials = standalone ? blockInfo.GetAllMaterials() : null;
+
+        ExecutionTimeInSeconds = Stopwatch.GetElapsedTime(startTime).TotalSeconds;
     }
 }

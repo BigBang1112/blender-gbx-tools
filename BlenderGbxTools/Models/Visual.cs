@@ -6,6 +6,7 @@ internal sealed class Visual
 {
     public byte[]? Vertices { get; }
     public int[]? Indices { get; }
+    public byte[]? Normals { get; }
     public byte[][]? TexCoords { get; }
 
     public Visual()
@@ -18,6 +19,9 @@ internal sealed class Visual
         using var vertexStream = new MemoryStream();
         using var vertexWriter = new BinaryWriter(vertexStream);
 
+        using var normalStream = new MemoryStream();
+        using var normalWriter = new BinaryWriter(normalStream);
+
         if (visual.VertexStreams.Count == 0)
         {
             for (var i = 0; i < visual.Vertices.Length; i++)
@@ -26,6 +30,13 @@ internal sealed class Visual
                 vertexWriter.Write(vertex.Position.X);
                 vertexWriter.Write(vertex.Position.Y);
                 vertexWriter.Write(vertex.Position.Z);
+
+                if (vertex.Normal.HasValue)
+                {
+                    normalWriter.Write(vertex.Normal.Value.X);
+                    normalWriter.Write(vertex.Normal.Value.Y);
+                    normalWriter.Write(vertex.Normal.Value.Z);
+                }
             }
         }
         else
@@ -38,6 +49,13 @@ internal sealed class Visual
                     vertexWriter.Write(vertex.Y);
                     vertexWriter.Write(vertex.Z);
                 }
+
+                foreach (var normal in stream.Normals ?? [])
+                {
+                    normalWriter.Write(normal.X);
+                    normalWriter.Write(normal.Y);
+                    normalWriter.Write(normal.Z);
+                }
             }
         }
 
@@ -45,6 +63,7 @@ internal sealed class Visual
 
         Vertices = vertexStream.Length == 0 ? null : vertexStream.ToArray();
         Indices = indices.Length == 0 ? null : indices;
+        Normals = normalStream.Length == 0 ? null : normalStream.ToArray();
         TexCoords = visual.TexCoords.Select(set =>
         {
             using var uvStream = new MemoryStream();

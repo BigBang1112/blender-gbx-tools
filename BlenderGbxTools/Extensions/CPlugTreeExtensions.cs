@@ -1,7 +1,7 @@
 ﻿using GBX.NET;
 using GBX.NET.Engines.Plug;
 
-namespace BlenderGbxTools;
+namespace BlenderGbxTools.Extensions;
 
 internal static class CPlugTreeExtensions
 {

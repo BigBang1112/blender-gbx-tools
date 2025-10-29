@@ -1,4 +1,5 @@
-﻿using GBX.NET;
+﻿using BlenderGbxTools.Extensions;
+using GBX.NET;
 using GBX.NET.Engines.Plug;
 using System.Collections.Immutable;
 using System.Runtime.InteropServices;

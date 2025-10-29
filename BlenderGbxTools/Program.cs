@@ -3,8 +3,9 @@ using GBX.NET;
 using GBX.NET.LZO;
 
 if (args.Length == 0)
-{
-    Console.WriteLine("Usage: BlenderGbxTools.exe <path to Gbx file>");
+{ 
+    Console.WriteLine($"Usage: BlenderGbxTools{(OperatingSystem.IsWindows() ? ".exe" : "")} <path to Gbx file>");
+    
     Environment.ExitCode = 1;
     return;
 }

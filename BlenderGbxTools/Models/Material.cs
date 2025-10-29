@@ -5,7 +5,7 @@ namespace BlenderGbxTools.Models;
 
 internal sealed class Material
 {
-    public ImmutableDictionary<string, Texture>? Textures { get; private init; }
+    public ImmutableDictionary<string, Texture>? Textures { get; }
 
     public Material()
     {
