@@ -6,6 +6,7 @@ namespace BlenderGbxTools.Models;
 internal sealed class Material
 {
     public ImmutableDictionary<string, Texture>? Textures { get; }
+    public string? SurfaceId { get; }
 
     public Material()
     {
@@ -42,5 +43,6 @@ internal sealed class Material
         }
 
         Textures = textures.ToImmutable();
+        SurfaceId = material.SurfaceId.ToString();
     }
 }
