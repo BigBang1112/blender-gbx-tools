@@ -15,7 +15,7 @@ bl_info = {
     "name": "Blender Gbx Tools",
     "author": "BigBang1112",
     "description": "Working with Gbx files inside of Blender.",
-    "blender": (4, 0, 0),
+    "blender": (4, 1, 0),
     "version": (0, 0, 1),
     "location": "File > Import",
     "support": "TESTING",
@@ -26,13 +26,16 @@ bl_info = {
 from . import import_gbx
 from . import export_meshparams
 from . import export_item
+from . import merge_custom_item
 
 def register():
     import_gbx.register()
     export_meshparams.register()
     export_item.register()
+    merge_custom_item.register()
 
 def unregister():
     import_gbx.unregister()
     export_meshparams.unregister()
     export_item.unregister()
+    merge_custom_item.unregister()

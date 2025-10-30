@@ -28,9 +28,15 @@ class ExportMeshParamsXML(Operator, ExportHelper):
         max=100.0
     ) # type: ignore
     
-    collection: StringProperty(
+    collection: EnumProperty(
         name="Collection",
-        description="Collection name (e.g., Canyon, Stadium, Valley)",
+        description="Collection name",
+        items=[
+            ('Canyon', 'Canyon', 'Canyon collection'),
+            ('Stadium', 'Stadium', 'Stadium collection'),
+            ('Valley', 'Valley', 'Valley collection'),
+            ('Lagoon', 'Lagoon', 'Lagoon collection'),
+        ],
         default="Canyon"
     ) # type: ignore
     
