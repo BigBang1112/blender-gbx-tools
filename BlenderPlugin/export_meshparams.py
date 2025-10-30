@@ -4,8 +4,6 @@ import xml.dom.minidom as minidom
 from bpy.types import Operator
 from bpy.props import StringProperty, FloatProperty, EnumProperty
 from bpy_extras.io_utils import ExportHelper
-import os
-
 
 class ExportMeshParamsXML(Operator, ExportHelper):
     """Export MeshParams XML format"""
@@ -153,9 +151,41 @@ class ExportMeshParamsXML(Operator, ExportHelper):
         shader_name = str(material["Shader"])
         
         if shader_name not in shader_to_model:
-            raise ValueError(f"Unknown shader '{shader_name}' in material '{material.name}'")
+            # Try to guess based on shader name patterns
+            guessed_model = self.guess_shader_model(shader_name)
+            if guessed_model:
+                # Report warning that we're guessing
+                self.report({'WARNING'}, f"Unknown shader '{shader_name}' in material '{material.name}', guessing model '{guessed_model}' based on name patterns")
+                return guessed_model
+            else:
+                # No guess possible, throw error
+                raise ValueError(f"Unknown shader '{shader_name}' in material '{material.name}'")
         
         return shader_to_model[shader_name]
+    
+    def guess_shader_model(self, shader_name):
+        """Try to guess shader model based on shader name patterns"""
+        shader_lower = shader_name.lower()
+        
+        # Look for common patterns in shader names
+        
+        # Self-illumination patterns
+        if any(pattern in shader_lower for pattern in ['selfillum', 'selfi', 'tselfi', 'illum']):
+            if any(pattern in shader_lower for pattern in ['night', 'nightonly']):
+                return "TDSNI_Night"
+            else:
+                return "TDSNI"
+        
+        # Alpha/transparency patterns
+        if any(pattern in shader_lower for pattern in ['alpha', 'diffa', 'tdiffa', 'transparent']):
+            return "TDOSN"
+        
+        # Normal/standard diffuse patterns (most common fallback)
+        if any(pattern in shader_lower for pattern in ['diff', 'tdiff', 'spec', 'norm', 'standard', 'basic']):
+            return "TDSN"
+        
+        # If we can't guess, return None to trigger error
+        return None
     
     def get_base_texture_path(self, material):
         """Get the base texture path using material name and configurable base path"""
@@ -173,16 +203,6 @@ class ExportMeshParamsXML(Operator, ExportHelper):
                 link.to_socket.name == "Base Color"):
                 return True
         return False
-    
-    def get_principled_bsdf_node(self, material):
-        """Get the Principled BSDF node from material"""
-        if not material.use_nodes:
-            return None
-        
-        for node in material.node_tree.nodes:
-            if node.type == 'BSDF_PRINCIPLED':
-                return node
-        return None
     
     def add_lights_to_xml(self, lights_elem):
         """Add light objects to XML - selected lights if any are selected, otherwise all lights"""

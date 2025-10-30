@@ -1,6 +1,4 @@
 import bpy
-import bmesh
-from mathutils import Matrix
 from bpy.types import Operator
 
 
