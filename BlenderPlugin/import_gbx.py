@@ -1,6 +1,6 @@
 import bpy
 from bpy.types import Operator
-from bpy.props import StringProperty, BoolProperty
+from bpy.props import StringProperty, BoolProperty, EnumProperty
 from bpy_extras.io_utils import ImportHelper
 
 from . import exec
@@ -110,7 +110,38 @@ class ImportBlockInfoGbx(BaseGbxImporter):
         options={'HIDDEN'},
         maxlen=255,
     ) # type: ignore
-    
+
+    variant_extract: EnumProperty(
+        name="Variant",
+        description="Select the variant to import",
+        items=[
+            ('AIR_AND_GROUND', "Air and Ground", "Import both Air and Ground variants"),
+            ('AIR', "Air", "Import Air variant only"),
+            ('GROUND', "Ground", "Import Ground variant only"),
+        ],
+        default='AIR_AND_GROUND',
+    ) # type: ignore
+
+    include_spawn_point: BoolProperty(
+        name="Include spawn point",
+        description="Include spawn point object in the import",
+        default=True,
+    ) # type: ignore
+
+    include_editor_helpers: BoolProperty(
+        name="Include editor helpers",
+        description="Include editor helpers objects in the import",
+        default=False,
+    ) # type: ignore
+
+    # override get_import_settings to include variant
+    def get_import_settings(self):
+        settings = super().get_import_settings()
+        settings["variant"] = self.variant_extract
+        settings["include_spawn_point"] = self.include_spawn_point
+        settings["include_editor_helpers"] = self.include_editor_helpers
+        return settings
+
     def import_object(self, response):
         blockinfo.create(response, self.get_import_settings())
 

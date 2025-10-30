@@ -12,8 +12,10 @@ def create(dict, settings=None):
     material_set_dict = material.create_multiple(dict.get("Materials"))
     surface_material_set_list = material.create_surface_multiple(dict.get("SurfaceMaterials"))
 
-    air_object = create_variant("Air", dict.get("VariantAir"), material_set_dict, surface_material_set_list, settings)
-    ground_object = create_variant("Ground", dict.get("VariantGround"), material_set_dict, surface_material_set_list, settings)
+    if settings is None or settings.get("variant") == "AIR_AND_GROUND" or settings.get("variant") == "AIR":
+        air_object = create_variant("Air", dict.get("VariantAir"), material_set_dict, surface_material_set_list, settings)
+    if settings is None or settings.get("variant") == "AIR_AND_GROUND" or settings.get("variant") == "GROUND":
+        ground_object = create_variant("Ground", dict.get("VariantGround"), material_set_dict, surface_material_set_list, settings)
 
     root_object = bpy.data.objects.new(dict["Name"], None)
 
@@ -65,35 +67,37 @@ def create_variant(name, variant_dict, material_set_dict, surface_material_set_l
         waypoint_object = solid.create(waypoint_solid_dict, material_set_dict, surface_material_set_list, settings)
         waypoint_object.parent = variant_object
 
-    helper_solid_dict = variant_dict.get("Helper")
-    if helper_solid_dict is not None:
-        helper_object = solid.create(helper_solid_dict, material_set_dict, surface_material_set_list, settings)
-        helper_object.parent = variant_object
+    if settings is None or settings.get("include_editor_helpers", False):
+        helper_solid_dict = variant_dict.get("Helper")
+        if helper_solid_dict is not None:
+            helper_object = solid.create(helper_solid_dict, material_set_dict, surface_material_set_list, settings)
+            helper_object.parent = variant_object
 
-    spawn_loc = variant_dict.get("SpawnLoc")
-    spawn_trans = variant_dict.get("SpawnTrans")
-    spawn_pitch = variant_dict.get("SpawnPitch")
-    spawn_yaw = variant_dict.get("SpawnYaw")
+    if settings is None or settings.get("include_spawn_point", True):
+        spawn_loc = variant_dict.get("SpawnLoc")
+        spawn_trans = variant_dict.get("SpawnTrans")
+        spawn_pitch = variant_dict.get("SpawnPitch")
+        spawn_yaw = variant_dict.get("SpawnYaw")
 
-    if spawn_loc is not None or spawn_trans is not None or spawn_pitch is not None or spawn_yaw is not None:
-        spawn_object = bpy.data.objects.new(f"{name}_Spawn", None)
-        spawn_object.empty_display_type = 'SINGLE_ARROW'
-        spawn_object.empty_display_size = 10.0
-        bpy.context.collection.objects.link(spawn_object)
-        spawn_object.parent = variant_object
-        
-        if spawn_loc is not None:
-            apply_location(spawn_object, spawn_loc)
-            spawn_object.rotation_euler.x += math.radians(90)  # Adjust pitch by 90 degrees
-        
-        if spawn_trans is not None:
-            spawn_object.location = (spawn_trans["X"], -spawn_trans["Z"], spawn_trans["Y"])
+        if spawn_loc is not None or spawn_trans is not None or spawn_pitch is not None or spawn_yaw is not None:
+            spawn_object = bpy.data.objects.new(f"{name}_Spawn", None)
+            spawn_object.empty_display_type = 'SINGLE_ARROW'
+            spawn_object.empty_display_size = 10.0
+            bpy.context.collection.objects.link(spawn_object)
+            spawn_object.parent = variant_object
+            
+            if spawn_loc is not None:
+                apply_location(spawn_object, spawn_loc)
+                spawn_object.rotation_euler.x += math.radians(90)  # Adjust pitch by 90 degrees
+            
+            if spawn_trans is not None:
+                spawn_object.location = (spawn_trans["X"], -spawn_trans["Z"], spawn_trans["Y"])
 
-        if spawn_pitch is not None:
-            spawn_object.rotation_euler.x = math.radians(spawn_pitch + 90)
-        
-        if spawn_yaw is not None:
-            spawn_object.rotation_euler.z = math.radians(spawn_yaw)
+            if spawn_pitch is not None:
+                spawn_object.rotation_euler.x = math.radians(spawn_pitch + 90)
+            
+            if spawn_yaw is not None:
+                spawn_object.rotation_euler.z = math.radians(spawn_yaw)
 
     return variant_object
 
