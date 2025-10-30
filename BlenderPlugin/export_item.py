@@ -278,20 +278,20 @@ def menu_func_export_item_file(self, context):
 
 def register():
     """Register the export operators and panel"""
-    bpy.utils.register_class(ExportItemXMLOperator)
-    bpy.utils.register_class(ExportItemXMLFileOperator)
-    bpy.utils.register_class(ITEM_PT_export_panel)
-    bpy.types.TOPBAR_MT_file_export.append(menu_func_export_item_modal)
-    bpy.types.TOPBAR_MT_file_export.append(menu_func_export_item_file)
+    #bpy.utils.register_class(ExportItemXMLOperator)
+    #bpy.utils.register_class(ExportItemXMLFileOperator)
+    #bpy.utils.register_class(ITEM_PT_export_panel)
+    #bpy.types.TOPBAR_MT_file_export.append(menu_func_export_item_modal)
+    #bpy.types.TOPBAR_MT_file_export.append(menu_func_export_item_file)
 
 
 def unregister():
     """Unregister the export operators and panel"""
-    bpy.utils.unregister_class(ExportItemXMLOperator)
-    bpy.utils.unregister_class(ExportItemXMLFileOperator)
-    bpy.utils.unregister_class(ITEM_PT_export_panel)
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export_item_modal)
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export_item_file)
+    #bpy.utils.unregister_class(ExportItemXMLOperator)
+    #bpy.utils.unregister_class(ExportItemXMLFileOperator)
+    #bpy.utils.unregister_class(ITEM_PT_export_panel)
+    #bpy.types.TOPBAR_MT_file_export.remove(menu_func_export_item_modal)
+    #bpy.types.TOPBAR_MT_file_export.remove(menu_func_export_item_file)
 
 
 if __name__ == "__main__":

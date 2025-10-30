@@ -27,15 +27,18 @@ from . import import_gbx
 from . import export_meshparams
 from . import export_item
 from . import merge_custom_item
+from . import gbx_tools_panel
 
 def register():
     import_gbx.register()
     export_meshparams.register()
     export_item.register()
     merge_custom_item.register()
+    gbx_tools_panel.register()
 
 def unregister():
     import_gbx.unregister()
     export_meshparams.unregister()
     export_item.unregister()
     merge_custom_item.unregister()
+    gbx_tools_panel.unregister()

@@ -12,18 +12,35 @@ class ExportMeshParamsXML(Operator, ExportHelper):
     bl_idname = "export_meshparams.xml"
     bl_label = "Export MeshParams XML"
     
-    filename_ext = ".xml"
+    filename_ext = ".MeshParams.xml"
     filter_glob: StringProperty(
         default="*.xml",
         options={'HIDDEN'},
         maxlen=255,
     ) # type: ignore
     
+    def check(self, context):
+        """Override to handle filename extension properly"""
+        changed = False
+        filepath = self.filepath
+        
+        # Remove duplicate extensions if they exist
+        if filepath.endswith(".MeshParams.xml.MeshParams.xml"):
+            self.filepath = filepath.replace(".MeshParams.xml.MeshParams.xml", ".MeshParams.xml")
+            changed = True
+        elif not filepath.endswith(".MeshParams.xml"):
+            # Only add extension if it's not already there
+            if not filepath.endswith(".xml"):
+                self.filepath = filepath + self.filename_ext
+                changed = True
+        
+        return changed
+    
     # MeshParams properties
     scale: FloatProperty(
         name="Scale",
         description="Scale value for the mesh",
-        default=0.01,
+        default=1,
         min=0.001,
         max=100.0
     ) # type: ignore
@@ -51,6 +68,12 @@ class ExportMeshParamsXML(Operator, ExportHelper):
         default='Static'
     ) # type: ignore
     
+    texture_base_path: StringProperty(
+        name="Texture Base Path",
+        description="Base path for texture references",
+        default="../../../Textures"
+    ) # type: ignore
+    
     def execute(self, context):
         try:
             xml_data = self.generate_meshparams_xml()
@@ -71,9 +94,18 @@ class ExportMeshParamsXML(Operator, ExportHelper):
         # Add Materials section
         materials_elem = ET.SubElement(root, "Materials")
         
-        for material in bpy.data.materials:
-            if material.users == 0:  # Skip unused materials
-                continue
+        # Collect materials from selected objects, or all mesh objects if none selected
+        selected_materials = set()
+        selected_objects = bpy.context.selected_objects
+        mesh_objects_to_check = selected_objects if selected_objects else bpy.data.objects
+        
+        for obj in mesh_objects_to_check:
+            if obj.type == 'MESH' and obj.data.materials:
+                for material in obj.data.materials:
+                    if material is not None:  # Material slot might be empty
+                        selected_materials.add(material)
+        
+        for material in selected_materials:
                 
             material_elem = ET.SubElement(materials_elem, "Material")
             material_elem.set("Name", material.name)
@@ -103,57 +135,32 @@ class ExportMeshParamsXML(Operator, ExportHelper):
         return root
     
     def get_material_model(self, material):
-        """Determine the shader model based on material properties"""
-        # Default model
-        model = "TDSN"
+        """Determine the shader model based on Shader property"""
+        # Dictionary mapping shader names to model names
+        shader_to_model = {
+            "Tech3 Block TDiff_Spec_Norm": "TDSN",
+            "Tech3 Block TDiffA_Spec_Norm": "TDOSN", 
+            #"TDSNE": "TDSNE",
+            "Tech3 Block TSelfIllum": "TDSNI",
+            "Tech3_Block_TSelfI_TxDiffA": "TDSNI",
+            "Tech3 Block TSelfIllumNightOnly": "TDSNI_Night"
+        }
         
-        # Check for transparency/alpha
-        if material.use_nodes:
-            principled = self.get_principled_bsdf_node(material)
-            if principled and principled.inputs["Alpha"].default_value < 1.0:
-                model = "TDOSN"  # Transparent model
+        # Check for Shader property in material
+        if "Shader" not in material:
+            raise ValueError(f"Material '{material.name}' is missing required 'Shader' custom property")
         
-        # Check material name for specific models
-        name_lower = material.name.lower()
-        if "night" in name_lower or "light" in name_lower:
-            model = "TDSNI_Night" if "night" in name_lower else "TDSNI"
-        elif "alpha" in name_lower:
-            model = "TDOSN"
+        shader_name = str(material["Shader"])
         
-        # Check for custom model in material properties
-        if "Model" in material:
-            model = str(material["Model"])
+        if shader_name not in shader_to_model:
+            raise ValueError(f"Unknown shader '{shader_name}' in material '{material.name}'")
         
-        return model
+        return shader_to_model[shader_name]
     
     def get_base_texture_path(self, material):
-        """Get the base texture path from material"""
-        if not material.use_nodes:
-            return None
-        
-        # Look for the main diffuse/base color texture
-        for node in material.node_tree.nodes:
-            if node.type == 'TEX_IMAGE' and node.image:
-                # Check if connected to Base Color or if it's labeled as Diffuse
-                if (node.label and node.label.lower() in ["diffuse", "basecolor", "base"]) or \
-                   self.is_connected_to_base_color(node, material):
-                    if node.image.filepath:
-                        # Convert to relative path format used in MeshParams
-                        path = node.image.filepath
-                        # Remove file extension and convert to relative format
-                        if path.endswith('.dds') or path.endswith('.tga') or path.endswith('.png'):
-                            path = path.rsplit('.', 1)[0]
-                        # Convert absolute path to relative format like "../../../Textures/TextureName"
-                        filename = os.path.basename(path)
-                        return f"../../../Textures/{filename}"
-                    else:
-                        # For packed images, use the image name
-                        name = node.image.name
-                        if '.' in name:
-                            name = name.rsplit('.', 1)[0]
-                        return f"../../../Textures/{name}"
-        
-        return None
+        """Get the base texture path using material name and configurable base path"""
+        # Use material name as texture name with configurable base path
+        return f"{self.texture_base_path}/{material.name}"
     
     def is_connected_to_base_color(self, texture_node, material):
         """Check if texture node is connected to base color"""
@@ -178,33 +185,78 @@ class ExportMeshParamsXML(Operator, ExportHelper):
         return None
     
     def add_lights_to_xml(self, lights_elem):
-        """Add light objects to XML"""
+        """Add light objects to XML - selected lights if any are selected, otherwise all lights"""
         light_count = 1
         
-        for obj in bpy.data.objects:
-            if obj.type == 'LIGHT':
-                light_elem = ET.SubElement(lights_elem, "Light")
-                light_elem.set("Name", obj.name if obj.name else f"Light{light_count}")
+        # Check if any lights are selected
+        selected_lights = [obj for obj in bpy.context.selected_objects if obj.type == 'LIGHT']
+        lights_to_process = selected_lights if selected_lights else [obj for obj in bpy.data.objects if obj.type == 'LIGHT']
+        
+        for obj in lights_to_process:
+            light_elem = ET.SubElement(lights_elem, "Light")
+            light_elem.set("Name", obj.name if obj.name else f"Light{light_count}")
+            
+            # Determine light type - only Point and Spot are supported
+            light_type = "Point"  # Default
+            if obj.data.type == 'SPOT':
+                light_type = "Spot"
+            
+            light_elem.set("Type", light_type)
+            
+            # sRGB color (convert from linear to hex)
+            color = obj.data.color
+            r = int(min(255, max(0, color[0] * 255)))
+            g = int(min(255, max(0, color[1] * 255)))
+            b = int(min(255, max(0, color[2] * 255)))
+            srgb_hex = f"{r:02x}{g:02x}{b:02x}"
+            light_elem.set("sRGB", srgb_hex)
+            
+            # Intensity (convert from Blender energy)
+            intensity = obj.data.energy / 250.0  # Reverse the scaling from import
+            light_elem.set("Intensity", str(intensity))
+            
+            # Distance (if custom distance is enabled)
+            if hasattr(obj.data, 'use_custom_distance') and obj.data.use_custom_distance:
+                light_elem.set("Distance", str(obj.data.cutoff_distance))
+            
+            # Point light specific attributes
+            if light_type == "Point":
+                # PointEmissionRadius - check custom property or use default
+                if "PointEmissionRadius" in obj.data:
+                    light_elem.set("PointEmissionRadius", str(obj.data["PointEmissionRadius"]))
                 
-                # Determine light type
-                light_type = "Point"  # Default
-                if obj.data.type == 'SUN':
-                    light_type = "Directional"
-                elif obj.data.type == 'SPOT':
-                    light_type = "Spot"
-                elif obj.data.type == 'AREA':
-                    light_type = "Area"
+                # PointEmissionLength - check custom property
+                if "PointEmissionLength" in obj.data:
+                    light_elem.set("PointEmissionLength", str(obj.data["PointEmissionLength"]))
+            
+            # Spot light specific attributes
+            elif light_type == "Spot":
+                # Inner and outer angles from custom properties
+                if "AngleInner" in obj.data:
+                    light_elem.set("SpotInnerAngle", str(obj.data["AngleInner"]))
+                if "AngleOuter" in obj.data:
+                    light_elem.set("SpotOuterAngle", str(obj.data["AngleOuter"]))
+                else:
+                    # Fallback: convert from Blender's spot_size
+                    import math
+                    outer_angle = math.degrees(obj.data.spot_size)
+                    light_elem.set("SpotOuterAngle", str(outer_angle))
                 
-                light_elem.set("Type", light_type)
-                
-                # Check if it's a night-only light (based on name or custom property)
-                night_only = False
-                if "night" in obj.name.lower() or "NightOnly" in obj:
-                    night_only = True
-                
-                light_elem.set("NightOnly", str(night_only).lower())
-                
-                light_count += 1
+                # Spot emission size - check custom properties
+                if "SpotEmissionSizeX" in obj.data:
+                    light_elem.set("SpotEmissionSizeX", str(obj.data["SpotEmissionSizeX"]))
+                if "SpotEmissionSizeY" in obj.data:
+                    light_elem.set("SpotEmissionSizeY", str(obj.data["SpotEmissionSizeY"]))
+            
+            # NightOnly attribute
+            night_only = False
+            if "NightOnly" in obj.data:
+                night_only = obj.data["NightOnly"]
+            
+            if night_only:
+                light_elem.set("NightOnly", "true")
+            
+            light_count += 1
     
     def save_xml_to_file(self, xml_root, filepath):
         """Save XML to file with pretty formatting"""
@@ -216,14 +268,12 @@ class ExportMeshParamsXML(Operator, ExportHelper):
         
         # Write to file with proper formatting
         with open(filepath, 'w', encoding='utf-8') as f:
-            # Write the XML declaration and pretty printed XML
-            f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
             # Remove the XML declaration from minidom output and write the rest
-            pretty_xml = dom.documentElement.toprettyxml(indent="  ")
+            pretty_xml = dom.documentElement.toprettyxml(indent="\t")
             f.write(pretty_xml)
 
 
-def export_meshparams_to_xml(filepath=None, scale=0.01, collection="Canyon", mesh_type="Static"):
+def export_meshparams_to_xml(filepath=None, scale=0.01, collection="Canyon", mesh_type="Static", texture_base_path="../../../Textures"):
     """Utility function to export MeshParams to XML programmatically"""
     if filepath is None:
         filepath = "meshparams_export.xml"
@@ -232,6 +282,7 @@ def export_meshparams_to_xml(filepath=None, scale=0.01, collection="Canyon", mes
     exporter.scale = scale
     exporter.collection = collection  
     exporter.mesh_type = mesh_type
+    exporter.texture_base_path = texture_base_path
     xml_data = exporter.generate_meshparams_xml()
     exporter.save_xml_to_file(xml_data, filepath)
     return filepath

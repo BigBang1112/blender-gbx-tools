@@ -282,26 +282,9 @@ class MergeForCustomItem(Operator):
                 bpy.data.objects.remove(obj, do_unlink=True)
 
 
-class VIEW3D_PT_merge_custom_item(bpy.types.Panel):
-    """Panel for merge custom item functionality"""
-    bl_label = "Gbx Tools"
-    bl_idname = "VIEW3D_PT_merge_custom_item"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = "Gbx Tools"
-
-    def draw(self, context):
-        layout = self.layout
-        
-        row = layout.row()
-        row.operator("object.merge_for_custom_item", text="Merge for custom item")
-
-
 def register():
     bpy.utils.register_class(MergeForCustomItem)
-    bpy.utils.register_class(VIEW3D_PT_merge_custom_item)
 
 
 def unregister():
     bpy.utils.unregister_class(MergeForCustomItem)
-    bpy.utils.unregister_class(VIEW3D_PT_merge_custom_item)
