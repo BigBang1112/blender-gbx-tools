@@ -13,7 +13,14 @@ internal static class CGameCtnBlockInfoExtensions
         var tmfSolids = blockInfo.AirMobils?
             .Concat(blockInfo.GroundMobils ?? [])
             .SelectMany(x => x)
-            .Select(x => x.Node?.Item?.Solid)
+            .Select(x => x.Node?.Item?.Solid?.Tree)
+            .OfType<CPlugSolid>() ?? [];
+
+        var tmfObjectLinks = blockInfo.AirMobils?
+            .Concat(blockInfo.GroundMobils ?? [])
+            .SelectMany(x => x)
+            .SelectMany(x => x.Node?.ObjectLink ?? [])
+            .Select(x => x.Mobil?.Item?.Solid?.Tree)
             .OfType<CPlugSolid>() ?? [];
 
         var mpSolids = blockInfo.VariantBaseAir?.Mobils?
@@ -22,7 +29,7 @@ internal static class CGameCtnBlockInfoExtensions
             .Select(x => x.SolidFid)
             .OfType<CPlugSolid>() ?? [];
 
-        return tmfSolids.Concat(mpSolids);
+        return tmfSolids.Concat(tmfObjectLinks).Concat(mpSolids);
     }
 
     public static ImmutableDictionary<string, Material> GetAllMaterials(this CGameCtnBlockInfo blockInfo)

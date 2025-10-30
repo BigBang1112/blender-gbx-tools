@@ -9,7 +9,7 @@ from . import visual
 from . import light
 from . import surface
 
-def create(dict, material_set_dict, surface_material_set_list, hide=False):
+def create(dict, material_set_dict, surface_material_set_list, hide, settings):
     name = dict.get("Name")
     children = dict.get("Children")
     visual_dict = dict.get("Visual")
@@ -61,7 +61,7 @@ def create(dict, material_set_dict, surface_material_set_list, hide=False):
     # CPlugTree children
     if children is not None:
         for child in children:
-            create(child, material_set_dict, surface_material_set_list, hide).parent = object
+            create(child, material_set_dict, surface_material_set_list, hide, settings).parent = object
     
     object.select_set(True)
     object.hide_set(hide)
@@ -72,9 +72,9 @@ def create(dict, material_set_dict, surface_material_set_list, hide=False):
         for distance, level in visual_mip.items():
             if first:
                 first = False
-            else:
+            elif settings.get("hide_lod", False):
                 hide = True
-            mip_object = create(level, material_set_dict, surface_material_set_list, hide)
+            mip_object = create(level, material_set_dict, surface_material_set_list, hide, settings)
             mip_object["Distance"] = float(distance)
             mip_object.name = f"{name} (LOD {distance})"
             mip_object.parent = object

@@ -1,6 +1,6 @@
 import bpy
 from bpy.types import Operator
-from bpy.props import StringProperty
+from bpy.props import StringProperty, BoolProperty
 from bpy_extras.io_utils import ImportHelper
 
 from . import exec
@@ -24,6 +24,12 @@ class BaseGbxImporter(Operator, ImportHelper):
         default=exec_defaultpath,
     ) # type: ignore
 
+    hide_lod: BoolProperty(
+        name="Hide LOD objects",
+        description="Hide Level of Detail (LOD) objects",
+        default=True,
+    ) # type: ignore
+
     def execute(self, context):
         response = exec.gbx_to_json(self.filepath, self.execpath, context, self.report)
         
@@ -32,6 +38,13 @@ class BaseGbxImporter(Operator, ImportHelper):
         
         self.import_object(response)
         return {'FINISHED'}
+
+    def get_import_settings(self):
+        """Get import settings as a dictionary"""
+        return {
+            'hide_lod': self.hide_lod,
+            # Add other settings here as needed
+        }
 
     def import_object(self, response):
         """Override this method in subclasses"""
@@ -51,7 +64,7 @@ class ImportSolidGbx(BaseGbxImporter):
     ) # type: ignore
     
     def import_object(self, response):
-        solid.create(response)
+        solid.create(response, self.get_import_settings())
 
 
 class ImportMeshGbx(BaseGbxImporter):
@@ -67,7 +80,7 @@ class ImportMeshGbx(BaseGbxImporter):
     ) # type: ignore
     
     def import_object(self, response):
-        solid2.create(response)
+        solid2.create(response, self.get_import_settings())
 
 
 class ImportItemGbx(BaseGbxImporter):
@@ -83,7 +96,7 @@ class ImportItemGbx(BaseGbxImporter):
     ) # type: ignore
 
     def import_object(self, response):
-        item.create(response)
+        item.create(response, self.get_import_settings())
 
 
 class ImportBlockInfoGbx(BaseGbxImporter):
@@ -93,13 +106,13 @@ class ImportBlockInfoGbx(BaseGbxImporter):
     
     filename_ext = ".EDClassic.Gbx"
     filter_glob: StringProperty(
-        default="*.EDClassic.Gbx;*.EDClip.Gbx;*.EDFlat.Gbx;*.EDFrontier.Gbx;*.EDPylon.Gbx;*.RectAsym.Gbx;*.EDRoad.Gbx;*.TMEDClassic.Gbx;*.TMEDClip.Gbx;*.TMEDFlat.Gbx;*.TMEDFrontier.Gbx;*.TMEDPylon.Gbx;*.TMRectAsym.Gbx;*.TMEDRoad.Gbx",
+        default="*.TMEDClassic.Gbx;*.TMEDClip.Gbx;*.TMEDFlat.Gbx;*.TMEDFrontier.Gbx;*.TMEDPylon.Gbx;*.TMEDRectAsym.Gbx;*.TMEDRoad.Gbx;*.EDClassic.Gbx;*.EDClip.Gbx;*.EDFlat.Gbx;*.EDFrontier.Gbx;*.EDPylon.Gbx;*.EDRectAsym.Gbx;*.EDRoad.Gbx;",
         options={'HIDDEN'},
         maxlen=255,
     ) # type: ignore
     
     def import_object(self, response):
-        blockinfo.create(response)
+        blockinfo.create(response, self.get_import_settings())
 
 
 # Menu functions
