@@ -28,11 +28,11 @@ internal sealed class BlockInfo : IStandalone
         Name = blockInfo.Ident.Id;
 
         VariantAir = blockInfo.VariantBaseAir is null
-            ? new BlockInfoVariant(blockInfo.AirMobils ?? [], blockInfo.AirBlockUnitInfos ?? [])
+            ? new BlockInfoVariant(blockInfo.AirMobils ?? [], blockInfo.AirBlockUnitInfos ?? [], blockInfo.SpawnLocAir, blockInfo.AirHelperMobil)
             : new BlockInfoVariant(blockInfo.VariantBaseAir);
 
         VariantGround = blockInfo.VariantBaseGround is null
-            ? new BlockInfoVariant(blockInfo.GroundMobils ?? [], blockInfo.GroundBlockUnitInfos ?? [])
+            ? new BlockInfoVariant(blockInfo.GroundMobils ?? [], blockInfo.GroundBlockUnitInfos ?? [], blockInfo.SpawnLocGround, blockInfo.GroundHelperMobil)
             : new BlockInfoVariant(blockInfo.VariantBaseGround);
 
         // Materials not in this dictionary use the default material
