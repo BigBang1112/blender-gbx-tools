@@ -64,7 +64,7 @@ class ImportSolidGbx(BaseGbxImporter):
     ) # type: ignore
     
     def import_object(self, response):
-        solid.create(response, self.get_import_settings())
+        solid.create(response, None, None, self.get_import_settings())
 
 
 class ImportMeshGbx(BaseGbxImporter):
