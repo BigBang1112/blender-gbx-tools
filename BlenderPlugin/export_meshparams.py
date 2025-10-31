@@ -38,7 +38,7 @@ class ExportMeshParamsXML(Operator, ExportHelper):
     scale: FloatProperty(
         name="Scale",
         description="Scale value for the mesh",
-        default=1,
+        default=0.01,
         min=0.001,
         max=100.0
     ) # type: ignore
@@ -85,7 +85,7 @@ class ExportMeshParamsXML(Operator, ExportHelper):
     def generate_meshparams_xml(self):
         """Generate MeshParams XML from Blender materials and lights"""
         root = ET.Element("MeshParams")
-        root.set("Scale", str(self.scale))
+        root.set("Scale", f"{self.scale:.2f}")
         root.set("Collection", self.collection)
         root.set("MeshType", self.mesh_type)
         
@@ -103,7 +103,10 @@ class ExportMeshParamsXML(Operator, ExportHelper):
                     if material is not None:  # Material slot might be empty
                         selected_materials.add(material)
         
-        for material in selected_materials:
+        # Sort materials by name for consistent ordering
+        sorted_materials = sorted(selected_materials, key=lambda m: m.name)
+        
+        for material in sorted_materials:
                 
             material_elem = ET.SubElement(materials_elem, "Material")
             material_elem.set("Name", material.name)
@@ -188,9 +191,30 @@ class ExportMeshParamsXML(Operator, ExportHelper):
         return None
     
     def get_base_texture_path(self, material):
-        """Get the base texture path using material name and configurable base path"""
-        # Use material name as texture name with configurable base path
-        return f"{self.texture_base_path}/{material.name}"
+        """Get the base texture path using BaseTexture custom property or guessing from texture nodes"""
+        texture_name = None
+        
+        # First, check for BaseTexture custom property
+        if "BaseTexture" in material:
+            texture_name = str(material["BaseTexture"])
+        else:
+            # Fall back to looking for texture nodes in the material
+            if material.use_nodes and material.node_tree:
+                for node in material.node_tree.nodes:
+                    if node.type == 'TEX_IMAGE' and node.image:
+                        # Use the image name from the first texture found
+                        texture_name = node.image.name
+                        break
+            
+            # If no texture found, fall back to material name
+            if not texture_name:
+                texture_name = material.name
+            
+            # Remove everything from the last underscore onwards (handles _D, _S, _N, etc.)
+            if '_' in texture_name:
+                texture_name = texture_name[:texture_name.rfind('_')]
+        
+        return f"{self.texture_base_path}/{texture_name}"
     
     def is_connected_to_base_color(self, texture_node, material):
         """Check if texture node is connected to base color"""
@@ -232,7 +256,7 @@ class ExportMeshParamsXML(Operator, ExportHelper):
             light_elem.set("sRGB", srgb_hex)
             
             # Intensity (convert from Blender energy)
-            intensity = obj.data.energy / 250.0  # Reverse the scaling from import
+            intensity = obj.data.energy / 250.0 / 2  # Reverse the scaling from import, with extra reduction
             light_elem.set("Intensity", str(intensity))
             
             # Distance (if custom distance is enabled)
