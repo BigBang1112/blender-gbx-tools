@@ -201,7 +201,7 @@ class ExportMeshParamsXML(Operator, ExportHelper):
             # Fall back to looking for texture nodes in the material
             if material.use_nodes and material.node_tree:
                 for node in material.node_tree.nodes:
-                    if node.type == 'TEX_IMAGE' and node.image:
+                    if node.type == 'TEX_IMAGE' and node.name == "Diffuse" and node.image:
                         # Use the image name from the first texture found
                         texture_name = node.image.name
                         break
