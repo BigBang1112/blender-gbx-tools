@@ -22,11 +22,45 @@ def create_multiple(material_set_dict):
         tex_length = len(textures_dict)
         tex_height_dist = 50
 
+        blend_mix_node = None
+        overlay_mix_node = None
+
         if textures_dict is not None:
             for texture_name, texture_dict in textures_dict.items():
                 texture_node = create_texture(texture_name, texture_dict, mat)
                 texture_node.location = (-1000, tex_index*tex_height_dist-tex_length/2*tex_height_dist)
                 tex_index += 1
+
+                # TODO this part needs to be rewritten
+                if texture_name == "Blend1" or texture_name == "Blend2" or texture_name == "BlendI":
+                    if blend_mix_node is None:
+                        blend_mix_node = add_blend_mix_node(mat, texture_node)
+
+                    #mat.node_tree.links.new(texture_node.inputs["Vector"], global_uv_node.outputs["Vector"])
+
+                    if texture_name == "Blend1":
+                        mat.node_tree.links.new(blend_mix_node.inputs[6], texture_node.outputs["Color"])
+                    elif texture_name == "Blend2":
+                        mat.node_tree.links.new(blend_mix_node.inputs[7], texture_node.outputs["Color"])
+                    elif texture_name == "BlendI":
+                        mat.node_tree.links.new(blend_mix_node.inputs["Factor"], texture_node.outputs["Color"])
+
+                if overlay_mix_node is None and (texture_name == "Blend3" or texture_name == "SoilFix"):
+                    overlay_mix_node = add_overlay_mix_node(mat, texture_node)
+
+                if texture_name == "Diffuse" or texture_name == "PxzDiffuse" or texture_name == "Soil" or texture_name == "Advert":
+                    apply_diffuse_map(mat, texture_node)
+                #elif tex_name == "Normal":
+                #    apply_normal_map(mat, bsdf, texture_node)
+                elif texture_name == "BlendI":
+                    apply_blend_intensity_map(texture_node)
+
+        # TODO this part needs to be rewritten
+        if overlay_mix_node is not None:
+            mat.node_tree.links.new(mat.node_tree.nodes["Principled BSDF"].inputs["Base Color"], overlay_mix_node.outputs[2])
+            mat.node_tree.links.new(overlay_mix_node.inputs[6], blend_mix_node.outputs[2])
+        elif blend_mix_node is not None:
+            mat.node_tree.links.new(mat.node_tree.nodes["Principled BSDF"].inputs["Base Color"], blend_mix_node.outputs[2])       
 
         materials[material_name] = mat
 
@@ -75,17 +109,12 @@ def create_surface_multiple(surface_material_set_list):
 def create_texture(texture_name, texture_dict, mat):
     texture_node = texture.create(texture_dict, mat)
     texture_node.label = texture_name
-    
-    if texture_name == "Diffuse":
-        apply_diffuse_map(mat, texture_node)
-    #elif texture_name == "Normal":
-    #    apply_normal_map(mat, texture_node)
-
     return texture_node
 
 def apply_diffuse_map(mat, img_tex_node):
     mat.node_tree.links.new(mat.node_tree.nodes["Principled BSDF"].inputs["Base Color"], img_tex_node.outputs["Color"])
 
+# broken in tm2
 def apply_normal_map(mat, img_tex_node):
     bsdf_node = mat.node_tree.nodes["Principled BSDF"]
 
@@ -105,3 +134,20 @@ def apply_normal_map(mat, img_tex_node):
     normal_map_node.location = (combine_color_node.location[0] + 200, combine_color_node.location[1])
     mat.node_tree.links.new(normal_map_node.inputs["Color"], combine_color_node.outputs["Color"])
     mat.node_tree.links.new(bsdf_node.inputs["Normal"], normal_map_node.outputs["Normal"])
+
+def add_overlay_mix_node(mat, img_tex_node):
+    overlay_mix_node = mat.node_tree.nodes.new("ShaderNodeMix")
+    overlay_mix_node.data_type = "RGBA"
+    overlay_mix_node.location = (img_tex_node.location[0] + 800, img_tex_node.location[1])
+    mat.node_tree.links.new(overlay_mix_node.inputs[7], img_tex_node.outputs["Color"])
+    mat.node_tree.links.new(overlay_mix_node.inputs["Factor"], img_tex_node.outputs["Alpha"])
+    return overlay_mix_node
+
+def add_blend_mix_node(mat, img_tex_node):
+    blend_mix_node = mat.node_tree.nodes.new("ShaderNodeMix")
+    blend_mix_node.data_type = "RGBA"
+    blend_mix_node.location = (img_tex_node.location[0] + 400, img_tex_node.location[1])
+    return blend_mix_node
+
+def apply_blend_intensity_map(img_tex_node):
+    img_tex_node.image.colorspace_settings.name = "Non-Color"
