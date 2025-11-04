@@ -12,6 +12,9 @@ def create(dict, settings=None):
     material_set_dict = material.create_multiple(dict.get("Materials"))
     surface_material_set_list = material.create_surface_multiple(dict.get("SurfaceMaterials"))
 
+    air_object = None
+    ground_object = None
+
     if settings is None or settings.get("variant") == "AIR_AND_GROUND" or settings.get("variant") == "AIR":
         air_object = create_variant("Air", dict.get("VariantAir"), material_set_dict, surface_material_set_list, settings)
     if settings is None or settings.get("variant") == "AIR_AND_GROUND" or settings.get("variant") == "GROUND":
@@ -47,6 +50,18 @@ def create_variant(name, variant_dict, material_set_dict, surface_material_set_l
             submobil_object = bpy.data.objects.new(f"{name}_Mobil_{i}_{j}", None)
             bpy.context.collection.objects.link(submobil_object)
             submobil_object.parent = mobil_object
+
+            geom_trans = mobil_dict.get("GeomTranslation")
+            if geom_trans is not None:
+                submobil_object.location = (geom_trans["X"], -geom_trans["Z"], geom_trans["Y"])
+
+            geom_rot = mobil_dict.get("GeomRotation")
+            if geom_rot is not None:
+                submobil_object.rotation_euler = (
+                    math.radians(geom_rot["X"]),
+                    math.radians(geom_rot["Z"]),
+                    math.radians(geom_rot["Y"])
+                )
 
             solid_dict = mobil_dict.get("Solid")
             if solid_dict is not None:

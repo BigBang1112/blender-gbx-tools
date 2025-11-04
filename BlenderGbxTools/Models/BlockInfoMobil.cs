@@ -10,6 +10,8 @@ internal sealed class BlockInfoMobil
 {
     public Solid? Solid { get; }
     public ImmutableList<ObjectLink>? ObjectLinks { get; }
+    public Vec3 GeomTranslation { get; }
+    public Vec3 GeomRotation { get; }
 
     public BlockInfoMobil(External<CSceneMobil> mobil)
     {
@@ -37,5 +39,8 @@ internal sealed class BlockInfoMobil
             var fileName = mobil.SolidFidFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(mobil.SolidFidFile.GetFullPath());
             Solid = new Solid(fileName, mobil.SolidFid, standalone: false);
         }
+
+        GeomTranslation = mobil.GeomTranslation;
+        GeomRotation = mobil.GeomRotation;
     }
 }
