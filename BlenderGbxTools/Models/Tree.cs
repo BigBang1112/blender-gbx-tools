@@ -36,7 +36,9 @@ internal sealed class Tree
 
         if (tree is CPlugTreeVisualMip mip)
         {
-            mipDict = mip.Levels.ToImmutableDictionary(x => x.FarZ, x => new Tree(x.Tree));
+            mipDict = mip.Levels
+                .DistinctBy(x => x.FarZ) // FarZ can be duplicated sometimes, epic Nadeo. should be additionally logged
+                .ToImmutableDictionary(x => x.FarZ, x => new Tree(x.Tree));
         }
 
         var light = default(Light);
