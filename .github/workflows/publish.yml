@@ -1,0 +1,38 @@
+name: Build and Package
+
+on:
+  workflow_dispatch:
+  
+env:
+  EXECUTABLE_NAME: BlenderGbxTools
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            executable-extension: .exe
+          - os: ubuntu-latest
+            executable-extension: ""
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 10.0.x
+
+    - name: Publish application
+      run: dotnet publish -o ./publish
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-${{ matrix.runtime }}
+        path: ./publish/${{ env.EXECUTABLE_NAME }}${{ matrix.executable-extension }}
+        retention-days: 1
