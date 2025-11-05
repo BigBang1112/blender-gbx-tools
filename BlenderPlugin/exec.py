@@ -20,7 +20,7 @@ def gbx_to_json(filepath, execpath, context, report_func):
     return json.loads(process_result.stdout)
 
 def find_executable(execpath, report_func):
-    if os.name == 'nt' and not execpath.lower().endswith('.exe'):
+    if needs_exe_extension(execpath):
         execpath += '.exe'
 
     execfilename = os.path.basename(execpath)
@@ -38,6 +38,18 @@ def find_executable(execpath, report_func):
         print(f"External {execfilename} executable found ({external_execpath})")
         return external_execpath
     
+    # Try development executable path
+    development_execpath = os.path.normpath("../BlenderGbxTools/bin/Debug/net10.0/BlenderGbxTools")
+    if needs_exe_extension(development_execpath):
+        development_execpath += '.exe'
+    report_func({'WARNING'}, f"Using development {execfilename} executable found ({development_execpath})")
+    if os.path.exists(development_execpath):
+        print(f"Development {execfilename} executable found ({development_execpath})")
+        return development_execpath
+
     # Executable not found
     report_func({'WARNING'}, f"{execfilename} executable was not found")
     return None
+
+def needs_exe_extension(execpath):
+    return os.name == 'nt' and not execpath.lower().endswith('.exe')

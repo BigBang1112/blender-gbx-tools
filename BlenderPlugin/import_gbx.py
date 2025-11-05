@@ -10,18 +10,14 @@ from . import solid2
 from . import item
 from . import blockinfo
 
-is_dev = True
-
 # Base class for all Gbx importers
 class BaseGbxImporter(Operator, ImportHelper):
     """Base class for Gbx file importers"""
-
-    exec_defaultpath = "./BlenderGbxTools" if not is_dev else "../BlenderGbxTools/bin/Debug/net10.0/BlenderGbxTools"
     
     execpath: StringProperty(
         name="Executable path",
         description="Executable to retrieve Gbx data as JSON",
-        default=exec_defaultpath,
+        default="./BlenderGbxTools",
     ) # type: ignore
 
     hide_lod: BoolProperty(
