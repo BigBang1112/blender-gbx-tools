@@ -144,12 +144,15 @@ class ExportMeshParamsXML(Operator, ExportHelper):
             #"TDSNE": "TDSNE",
             "Tech3 Block TSelfIllum": "TDSNI",
             "Tech3_Block_TSelfI_TxDiffA": "TDSNI",
-            "Tech3 Block TSelfIllumNightOnly": "TDSNI_Night"
+            "Tech3 Block TSelfIllumNightOnly": "TDSNI_Night",
+            "Tech3 Block TAdd": "TDSNI", # idk
+            "Tech3_Block_TDSN_CubeOut": "TDSN",
         }
         
         # Check for Shader property in material
         if "Shader" not in material:
-            raise ValueError(f"Material '{material.name}' is missing required 'Shader' custom property")
+            self.report({'WARNING'}, f"Material '{material.name}' is missing required 'Shader' custom property, using default model 'TDSN'")
+            return "TDSN"
         
         shader_name = str(material["Shader"])
         
@@ -180,11 +183,11 @@ class ExportMeshParamsXML(Operator, ExportHelper):
                 return "TDSNI"
         
         # Alpha/transparency patterns
-        if any(pattern in shader_lower for pattern in ['alpha', 'diffa', 'tdiffa', 'transparent']):
+        if any(pattern in shader_lower for pattern in ['alpha', 'diffa', 'tdiffa', 'transparent', 'tdosn']):
             return "TDOSN"
         
         # Normal/standard diffuse patterns (most common fallback)
-        if any(pattern in shader_lower for pattern in ['diff', 'tdiff', 'spec', 'norm', 'standard', 'basic']):
+        if any(pattern in shader_lower for pattern in ['diff', 'tdiff', 'spec', 'norm', 'standard', 'basic', 'tdsn']):
             return "TDSN"
         
         # If we can't guess, return None to trigger error
@@ -256,7 +259,7 @@ class ExportMeshParamsXML(Operator, ExportHelper):
             light_elem.set("sRGB", srgb_hex)
             
             # Intensity (convert from Blender energy)
-            intensity = obj.data.energy / 250.0 / 2  # Reverse the scaling from import, with extra reduction
+            intensity = obj.data.energy / 250.0 / 4  # Reverse the scaling from import, with extra reduction
             light_elem.set("Intensity", str(intensity))
             
             # Distance (if custom distance is enabled)
