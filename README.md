@@ -1,6 +1,8 @@
 # Blender Gbx Tools
 
-Blender plugin made for any form of 3D works with la GameBox.
+Blender plugin made for any form of 3D works with la GameBox (Trackmania/Shootmania engine).
+
+This project began as "Advanced Gbx Tools for Blender" in November 2022 but was remade into this.
 
 ## Build
 
