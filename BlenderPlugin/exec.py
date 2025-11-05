@@ -14,7 +14,7 @@ def gbx_to_json(filepath, execpath, context, report_func):
     print("Return code: " + str(process_result.returncode))
 
     if process_result.returncode != 0:
-        print(process_result.stdout)
+        report_func({'ERROR'}, f"Executable failed with error: {process_result.stderr}")
         return None
     
     return json.loads(process_result.stdout)
