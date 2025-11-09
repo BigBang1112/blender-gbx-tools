@@ -1,4 +1,5 @@
 ﻿using GBX.NET.Engines.Plug;
+using System.Runtime.InteropServices;
 
 namespace BlenderGbxTools.Models;
 
@@ -64,18 +65,29 @@ internal sealed class Visual
         Vertices = vertexStream.Length == 0 ? null : vertexStream.ToArray();
         Indices = indices.Length == 0 ? null : indices;
         Normals = normalStream.Length == 0 ? null : normalStream.ToArray();
-        TexCoords = visual.TexCoords.Select(set =>
+
+        if (visual.VertexStreams.Count == 0)
         {
-            using var uvStream = new MemoryStream();
-            using var uvWriter = new BinaryWriter(uvStream);
-
-            foreach (var uv in set.TexCoords)
+            TexCoords = visual.TexCoords.Select(set =>
             {
-                uvWriter.Write(uv.UV.X);
-                uvWriter.Write(uv.UV.Y);
-            }
+                using var uvStream = new MemoryStream();
+                using var uvWriter = new BinaryWriter(uvStream);
 
-            return uvStream.ToArray();
-        }).ToArray();
+                foreach (var uv in set.TexCoords)
+                {
+                    uvWriter.Write(uv.UV.X);
+                    uvWriter.Write(uv.UV.Y);
+                }
+
+                return uvStream.ToArray();
+            }).ToArray();
+        }
+        else
+        {
+            TexCoords = visual.VertexStreams[0].UVs.Select(uvSet =>
+            {
+                return MemoryMarshal.AsBytes(uvSet.Value).ToArray();
+            }).ToArray();
+        }
     }
 }
