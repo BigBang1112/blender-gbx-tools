@@ -1,7 +1,8 @@
 name: Build and Package
 
 on:
-  workflow_dispatch:
+  release:
+    types: [published]
   
 env:
   EXECUTABLE_NAME: BlenderGbxTools
@@ -39,6 +40,9 @@ jobs:
   package:
     needs: build
     runs-on: ubuntu-latest
+    
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
     - uses: actions/checkout@v4
@@ -56,8 +60,24 @@ jobs:
         zip -r ../BlenderGbxTools.zip .
         cd ..
 
-    - name: Upload BlenderGbxTools package
-      uses: actions/upload-artifact@v4
-      with:
-        path: BlenderGbxTools.zip
-        retention-days: 7
+    - name: Calculate SHA256 (Windows)
+      if: matrix.os.os == 'windows-latest'
+      run: |
+        $hash = Get-FileHash -Path 'BlenderGbxTools.zip' -Algorithm SHA256
+        $hashValue = $hash.Hash.ToLower()
+        Write-Host $hashValue
+
+    - name: Calculate SHA256 (Linux)
+      if: matrix.os.os == 'ubuntu-latest'
+      run: |
+        sha256sum "BlenderGbxTools.zip" | awk '{print $1}'
+
+    - name: Upload BlenderGbxTools.zip to this release
+      run: gh release upload ${{ github.ref_name }} BlenderGbxTools.zip
+        
+    - name: Set release information
+      run: |
+        FINAL_BODY="${RELEASE_BODY}
+          
+        Assets were automatically generated using the [publish workflow](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
+        gh release edit ${{ github.ref_name }} -n "$FINAL_BODY"
