@@ -19,6 +19,7 @@ def create(dict, material_set_dict, surface_material_set_list, hide, settings):
     light_dict = dict.get("Light")
     material = dict.get("Material")
     surface_dict = dict.get("Surface")
+    hide = hide or not dict.get("Visible", True)
     
     object_data = None
 
@@ -46,7 +47,7 @@ def create(dict, material_set_dict, surface_material_set_list, hide, settings):
     # CPlugTree.Surface
     if surface_dict is not None:
         surface_name = name + ".Surface"
-        surface_object = surface.create(surface_dict, surface_name, surface_material_set_list)  
+        surface_object = surface.create(surface_dict, surface_name, surface_material_set_list, settings)  
         if surface_object is not None:
             surface_object.parent = object
             surface_object.hide_set(True)

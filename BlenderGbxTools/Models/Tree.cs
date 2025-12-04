@@ -17,6 +17,7 @@ internal sealed class Tree
     public Light? Light { get; }
     public Surface? Surface { get; }
     public string? Material { get; }
+    public bool Visible { get; }
 
     public Tree()
     {
@@ -52,7 +53,7 @@ internal sealed class Tree
 
         if (tree.Surface is CPlugSurface plugSurface)
         {
-            surface = new Surface(plugSurface);
+            surface = new Surface(null, plugSurface, standalone: false);
         }
 
         Name = tree.Name ?? "[unnamed]";
@@ -64,6 +65,7 @@ internal sealed class Tree
         Light = light;
         Material = tree.GetMaterialName();
         Surface = surface;
+        Visible = tree.IsVisible;
     }
 
     private static byte[]? LocationToByteArray(CPlugTree tree)

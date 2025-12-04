@@ -7,9 +7,10 @@ import mathutils
 
 from . import material
 from . import solid
+from . import prefab
 
 def create(dict, settings=None):
-    material_set_dict = material.create_multiple(dict.get("Materials"))
+    material_set_dict = material.create_multiple(dict.get("Materials"), settings)
     surface_material_set_list = material.create_surface_multiple(dict.get("SurfaceMaterials"))
 
     air_object = None
@@ -67,6 +68,11 @@ def create_variant(name, variant_dict, material_set_dict, surface_material_set_l
             if solid_dict is not None:
                 solid_object = solid.create(solid_dict, material_set_dict, surface_material_set_list, settings)
                 solid_object.parent = submobil_object
+
+            prefab_dict = mobil_dict.get("Prefab")
+            if prefab_dict is not None:
+                prefab_object = prefab.create(prefab_dict, material_set_dict, surface_material_set_list, settings)
+                prefab_object.parent = submobil_object
 
             objectlink_list = mobil_dict.get("ObjectLinks")
             if objectlink_list is not None:

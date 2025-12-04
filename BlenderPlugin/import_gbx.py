@@ -9,6 +9,8 @@ from . import solid
 from . import solid2
 from . import item
 from . import blockinfo
+from . import prefab
+from . import surface
 
 # Base class for all Gbx importers
 class BaseGbxImporter(Operator, ImportHelper):
@@ -26,6 +28,12 @@ class BaseGbxImporter(Operator, ImportHelper):
         default=True,
     ) # type: ignore
 
+    reuse_existing_materials: BoolProperty(
+        name="Reuse existing materials",
+        description="Reuse existing materials if they exist",
+        default=True,
+    ) # type: ignore
+
     def execute(self, context):
         response = exec.gbx_to_json(self.filepath, self.execpath, context, self.report)
         
@@ -39,6 +47,8 @@ class BaseGbxImporter(Operator, ImportHelper):
         """Get import settings as a dictionary"""
         return {
             'hide_lod': self.hide_lod,
+            'report_func': self.report,
+            'reuse_existing_materials': True,
             # Add other settings here as needed
         }
 
@@ -52,7 +62,6 @@ class ImportSolidGbx(BaseGbxImporter):
     bl_idname = "import_gbx.solid"
     bl_label = "Import Solid.Gbx"
     
-    filename_ext = ".Solid.Gbx"
     filter_glob: StringProperty(
         default="*.Solid.Gbx",
         options={'HIDDEN'},
@@ -68,7 +77,6 @@ class ImportMeshGbx(BaseGbxImporter):
     bl_idname = "import_gbx.mesh"
     bl_label = "Import Mesh.Gbx"
     
-    filename_ext = ".Mesh.Gbx"
     filter_glob: StringProperty(
         default="*.Mesh.Gbx;*.Solid2.Gbx",
         options={'HIDDEN'},
@@ -76,7 +84,37 @@ class ImportMeshGbx(BaseGbxImporter):
     ) # type: ignore
     
     def import_object(self, response):
-        solid2.create(response, self.get_import_settings())
+        solid2.create(response, None, self.get_import_settings())
+
+
+class ImportPrefabGbx(BaseGbxImporter):
+    """Import Mesh.Gbx files"""
+    bl_idname = "import_gbx.prefab"
+    bl_label = "Import Prefab.Gbx"
+    
+    filter_glob: StringProperty(
+        default="*.Prefab.Gbx",
+        options={'HIDDEN'},
+        maxlen=255,
+    ) # type: ignore
+    
+    def import_object(self, response):
+        prefab.create(response, None, None, self.get_import_settings())
+
+
+class ImportShapeGbx(BaseGbxImporter):
+    """Import Shape.Gbx files"""
+    bl_idname = "import_gbx.shape"
+    bl_label = "Import Shape.Gbx"
+    
+    filter_glob: StringProperty(
+        default="*.Shape.Gbx",
+        options={'HIDDEN'},
+        maxlen=255,
+    ) # type: ignore
+    
+    def import_object(self, response):
+        surface.create(response, None, None, self.get_import_settings())
 
 
 class ImportItemGbx(BaseGbxImporter):
@@ -84,7 +122,6 @@ class ImportItemGbx(BaseGbxImporter):
     bl_idname = "import_gbx.item"
     bl_label = "Import Item.Gbx"
     
-    filename_ext = ".Item.Gbx"
     filter_glob: StringProperty(
         default="*.Item.Gbx",
         options={'HIDDEN'},
@@ -92,7 +129,7 @@ class ImportItemGbx(BaseGbxImporter):
     ) # type: ignore
 
     def import_object(self, response):
-        item.create(response, self.get_import_settings())
+        item.create(response, None, self.get_import_settings())
 
 
 class ImportBlockInfoGbx(BaseGbxImporter):
@@ -100,9 +137,8 @@ class ImportBlockInfoGbx(BaseGbxImporter):
     bl_idname = "import_gbx.blockinfo"
     bl_label = "Import block"
     
-    filename_ext = ".EDClassic.Gbx"
     filter_glob: StringProperty(
-        default="*.TMEDClassic.Gbx;*.TMEDClip.Gbx;*.TMEDFlat.Gbx;*.TMEDFrontier.Gbx;*.TMEDPylon.Gbx;*.TMEDRectAsym.Gbx;*.TMEDRoad.Gbx;*.EDClassic.Gbx;*.EDClip.Gbx;*.EDFlat.Gbx;*.EDFrontier.Gbx;*.EDPylon.Gbx;*.EDRectAsym.Gbx;*.EDRoad.Gbx;",
+        default="*.ED*.Gbx;*.TMED*.Gbx;",
         options={'HIDDEN'},
         maxlen=255,
     ) # type: ignore
@@ -149,17 +185,25 @@ def menu_func_import_solid(self, context):
 def menu_func_import_mesh(self, context):
     self.layout.operator(ImportMeshGbx.bl_idname, text="Mesh (.Mesh.Gbx)")
 
+def menu_func_import_prefab(self, context):
+    self.layout.operator(ImportPrefabGbx.bl_idname, text="Prefab (.Prefab.Gbx)")
+
+def menu_func_import_shape(self, context):
+    self.layout.operator(ImportShapeGbx.bl_idname, text="Shape (.Shape.Gbx)")
+
 def menu_func_import_item(self, context):
     self.layout.operator(ImportItemGbx.bl_idname, text="Item (.Item.Gbx)")
 
 def menu_func_import_blockinfo(self, context):
-    self.layout.operator(ImportBlockInfoGbx.bl_idname, text="Block (.TM/ED*.Gbx)")
+    self.layout.operator(ImportBlockInfoGbx.bl_idname, text="Block (.*ED*.Gbx)")
 
 
 # Registration
 IMPORTERS = [
     (ImportSolidGbx, menu_func_import_solid),
     (ImportMeshGbx, menu_func_import_mesh),
+    (ImportPrefabGbx, menu_func_import_prefab),
+    (ImportShapeGbx, menu_func_import_shape),
     (ImportItemGbx, menu_func_import_item),
     (ImportBlockInfoGbx, menu_func_import_blockinfo),
 ]

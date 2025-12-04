@@ -4,6 +4,8 @@ using System.Text.Json.Serialization;
 namespace BlenderGbxTools;
 
 [JsonSerializable(typeof(Solid))]
+[JsonSerializable(typeof(Solid2))]
+[JsonSerializable(typeof(Item))]
 [JsonSerializable(typeof(BlockInfo))]
 [JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull, GenerationMode = JsonSourceGenerationMode.Metadata, UseStringEnumConverter = true)]
 internal sealed partial class AppJsonContext : JsonSerializerContext;

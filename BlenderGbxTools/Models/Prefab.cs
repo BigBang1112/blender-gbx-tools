@@ -5,31 +5,31 @@ using System.Diagnostics;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class Solid : IStandalone
+internal sealed class Prefab : IStandalone
 {
     public string? Name { get; }
-    public Tree? Tree { get; }
+    public ImmutableList<Ent>? Ents { get; }
 
     public ImmutableDictionary<string, Material?>? Materials { get; }
     public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; }
 
     public double ExecutionTimeInSeconds { get; }
 
-    public Solid()
+    public Prefab()
     {
         
     }
 
-    public Solid(string fileName, CPlugSolid solid, bool standalone = true)
+    public Prefab(string fileName, CPlugPrefab prefab, bool standalone = true)
     {
         var startTime = Stopwatch.GetTimestamp();
 
         Name = fileName;
-        Tree = solid.Tree is CPlugTree tree ? new Tree(tree) : null;
+        Ents = prefab.Ents.Length == 0 ? null : prefab.Ents.Select(x => new Ent(x)).ToImmutableList();
 
         // Materials not in this dictionary use the default material
-        Materials = standalone ? solid.GetAllMaterials() : null;
-        SurfaceMaterials = standalone ? solid.GetAllSurfaceMaterials() : null;
+        Materials = standalone ? prefab.GetAllMaterials() : null;
+        SurfaceMaterials = standalone ? prefab.GetAllSurfaceMaterials() : null;
 
         ExecutionTimeInSeconds = Stopwatch.GetElapsedTime(startTime).TotalSeconds;
     }
