@@ -9,6 +9,7 @@ namespace BlenderGbxTools.Models;
 internal sealed class BlockInfoMobil
 {
     public Solid? Solid { get; }
+    public Prefab? Prefab { get; }
     public ImmutableList<ObjectLink>? ObjectLinks { get; }
     public Vec3 GeomTranslation { get; }
     public Vec3 GeomRotation { get; }
@@ -38,6 +39,12 @@ internal sealed class BlockInfoMobil
         {
             var fileName = mobil.SolidFidFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(mobil.SolidFidFile.GetFullPath());
             Solid = new Solid(fileName, mobil.SolidFid, standalone: false);
+        }
+
+        if (mobil.PrefabFid is not null)
+        {
+            var fileName = mobil.PrefabFidFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(mobil.PrefabFidFile.GetFullPath());
+            Prefab ??= new Prefab(fileName, mobil.PrefabFid, standalone: false);
         }
 
         GeomTranslation = mobil.GeomTranslation;

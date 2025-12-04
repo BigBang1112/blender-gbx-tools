@@ -4,13 +4,20 @@ import bmesh
 import array
 import binascii
 
-def create(surface_dict, name, surface_material_set_list):
+from . import material
+
+def create(surface_dict, name, surface_material_set_list, settings=None):
+    if surface_material_set_list is None:
+        surface_material_set_list = material.create_surface_multiple(surface_dict.get("SurfaceMaterials"))
+    
     ellipsoid = surface_dict.get("Ellipsoid")
     sphere = surface_dict.get("Sphere")
     compound = surface_dict.get("Compound")
     positions = surface_dict.get("Positions")
     indices = surface_dict.get("Indices")
     surfaceIndex = surface_dict.get("SurfaceIndex")
+    if name is None:
+        name = surface_dict.get("Name")
 
     mesh = None
     scale = (1, 1, 1)
@@ -23,6 +30,9 @@ def create(surface_dict, name, surface_material_set_list):
         bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, radius=1)
         bm.to_mesh(mesh)
         bm.free()
+        # Enable smooth shading
+        for poly in mesh.polygons:
+            poly.use_smooth = True
     
     if sphere is not None:
         mesh = bpy.data.meshes.new(name)
@@ -32,6 +42,9 @@ def create(surface_dict, name, surface_material_set_list):
         bmesh.ops.create_uvsphere(bm, u_segments=32, v_segments=16, radius=1)
         bm.to_mesh(mesh)
         bm.free()
+        # Enable smooth shading
+        for poly in mesh.polygons:
+            poly.use_smooth = True
 
     if positions is not None and indices is not None:
         vert_bytes = binascii.a2b_base64(positions)
@@ -63,22 +76,21 @@ def create(surface_dict, name, surface_material_set_list):
             
             for face_index, surface_idx in enumerate(surfaceIndices):
                 if surface_idx < len(surface_material_set_list):
-                    material = surface_material_set_list[surface_idx]
+                    surf_mat = surface_material_set_list[surface_idx]
                     
                     # Track which materials we've added
-                    if material not in applied_materials:
-                        mesh.materials.append(material)
-                        applied_materials[material] = len(mesh.materials) - 1
+                    if surf_mat not in applied_materials:
+                        mesh.materials.append(surf_mat)
+                        applied_materials[surf_mat] = len(mesh.materials) - 1
                     
                     # Assign material to this face
                     if face_index < len(mesh.polygons):
-                        mesh.polygons[face_index].material_index = applied_materials[material]
-
+                        mesh.polygons[face_index].material_index = applied_materials[surf_mat]
     # Apply global surface material if no per-face indices
     elif surfaceIndex is not None and surface_material_set_list:
         if surfaceIndex < len(surface_material_set_list):
-            material = surface_material_set_list[surfaceIndex]
-            mesh.materials.append(material)
+            surf_mat = surface_material_set_list[surfaceIndex]
+            mesh.materials.append(surf_mat)
             # All faces will use material index 0 by default
 
     surface_object = bpy.data.objects.new(name, mesh)

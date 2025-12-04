@@ -11,7 +11,7 @@ internal sealed class BlockInfo : IStandalone
     public BlockInfoVariant? VariantAir { get; }
     public BlockInfoVariant? VariantGround { get; }
 
-    public ImmutableDictionary<string, Material>? Materials { get; }
+    public ImmutableDictionary<string, Material?>? Materials { get; }
     public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; }
 
     public double ExecutionTimeInSeconds { get; }

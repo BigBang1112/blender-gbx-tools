@@ -1,23 +1,39 @@
-﻿using GBX.NET;
+﻿using BlenderGbxTools.Extensions;
+using GBX.NET;
 using GBX.NET.Engines.Plug;
+using System.Collections.Immutable;
+using System.Diagnostics;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class Surface
+internal sealed class Surface : IStandalone
 {
+    public string? Name { get; }
     public Vec3? Ellipsoid { get; }
     public float? Sphere { get; }
     public byte[]? Positions { get; }
     public int[]? Indices { get; }
     public int? SurfaceIndex { get; }
 
+    public ImmutableDictionary<string, Material?>? Materials => null;
+    public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; }
+
+    public double ExecutionTimeInSeconds { get; }
+
     public Surface()
     {
         
     }
 
-    public Surface(CPlugSurface surface)
+    public Surface(string? fileName, CPlugSurface surface, bool standalone = true)
     {
+        var startTime = Stopwatch.GetTimestamp();
+
+        Name = fileName;
+
+        // Materials not in this dictionary use the default material
+        SurfaceMaterials = standalone ? surface.GetAllMaterials() : null;
+
         var surf = surface.Geom?.Surf ?? surface.Surf;
 
         if (surf is CPlugSurface.Ellipsoid ellipsoid)
@@ -87,5 +103,7 @@ internal sealed class Surface
                 Indices = inds;
             }
         }
+
+        ExecutionTimeInSeconds = Stopwatch.GetElapsedTime(startTime).TotalSeconds;
     }
 }

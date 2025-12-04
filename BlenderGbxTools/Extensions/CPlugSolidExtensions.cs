@@ -14,13 +14,13 @@ internal static class CPlugSolidExtensions
             .Where(tree => tree.Shader is CPlugMaterial);
     }
 
-    public static ImmutableDictionary<string, Material> GetAllMaterials(this CPlugSolid solid)
+    public static ImmutableDictionary<string, Material?> GetAllMaterials(this CPlugSolid solid)
     {
         // This only resolves materials with recognized Material.Gbx/Shader.Gbx
         return solid.GetDistinctMaterialTrees()
             .ToImmutableDictionary(
                 tree => tree.GetMaterialName(),
-                tree => new Material((CPlugMaterial)tree.Shader!));
+                tree => tree.Shader is null ? null : new Material((CPlugMaterial)tree.Shader));
     }
 
     public static IEnumerable<CPlugSurface.SurfMaterial> GetDistinctSurfaceMaterials(this CPlugSolid solid)

@@ -1,4 +1,5 @@
 ﻿using BlenderGbxTools.Extensions;
+using GBX.NET;
 using GBX.NET.Engines.Plug;
 using System.Collections.Immutable;
 
@@ -41,11 +42,16 @@ internal sealed class Material
         }
         else
         {
-            throw new Exception("Material has no custom material or device materials");
+            // often case with special effects?
         }
 
         Textures = textures.ToImmutable();
         SurfaceId = material.SurfaceId;
         Shader = material.GetShaderName();
+    }
+
+    public Material(CPlugMaterialUserInst mat)
+    {
+        SurfaceId = mat.SurfacePhysicId;
     }
 }
