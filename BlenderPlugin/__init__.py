@@ -16,7 +16,7 @@ bl_info = {
     "author": "BigBang1112",
     "description": "Working with Gbx files inside of Blender.",
     "blender": (4, 1, 0),
-    "version": (0, 0, 1),
+    "version": (0, 1, 0),
     "location": "File > Import",
     "support": "TESTING",
     "warning": "",

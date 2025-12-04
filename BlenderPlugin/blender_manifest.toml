@@ -3,7 +3,7 @@ schema_version = "1.0.0"
 # Example of manifest file for a Blender extension
 # Change the values according to your extension
 id = "blender_gbx_tools"
-version = "1.0.0"
+version = "0.1.0"
 name = "Blender Gbx Tools"
 tagline = "Working with Gbx files inside of Blender."
 maintainer = "BigBang1112"
