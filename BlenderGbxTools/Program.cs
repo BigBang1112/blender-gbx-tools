@@ -21,7 +21,7 @@ if (!File.Exists(filePath))
 
 Gbx.LZO = new MiniLZO();
 
-var node = Gbx.ParseNode(filePath);
+var node = Gbx.ParseNode(filePath, new() { SafeSkippableChunks = true });
 
 using var stream = Console.OpenStandardOutput();
 
