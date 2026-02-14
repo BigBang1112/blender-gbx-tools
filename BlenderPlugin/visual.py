@@ -44,6 +44,21 @@ def create(visual_dict, name):
     
         mesh.normals_split_custom_set_from_vertices(vertex_normals)
 
+    colors_base64 = visual_dict.get("Colors")
+
+    if colors_base64:
+        colors_bytes = binascii.a2b_base64(colors_base64)
+        colors_ints = array.array('i', colors_bytes)
+
+        colors = mesh.color_attributes.new(name="Color",type='FLOAT_COLOR', domain='POINT')
+        for i in range(0, len(mesh.vertices)):
+            color_int = colors_ints[i] & 0xFFFFFFFF
+            r = (color_int >> 16) & 0xFF
+            g = (color_int >> 8) & 0xFF
+            b = color_int & 0xFF
+            a = (color_int >> 24) & 0xFF
+            colors.data[i].color = (r/255.0, g/255.0, b/255.0, a/255.0);
+        
     counter = 0
     # make uv layers TODO rework for proper shader support
     for uv_base64 in visual_dict["TexCoords"]:
