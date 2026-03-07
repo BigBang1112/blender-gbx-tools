@@ -88,7 +88,7 @@ class ImportMeshGbx(BaseGbxImporter):
 
 
 class ImportPrefabGbx(BaseGbxImporter):
-    """Import Mesh.Gbx files"""
+    """Import Prefab.Gbx files"""
     bl_idname = "import_gbx.prefab"
     bl_label = "Import Prefab.Gbx"
     
