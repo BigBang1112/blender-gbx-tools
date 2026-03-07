@@ -39,13 +39,13 @@ internal sealed class Surface : IStandalone
         if (surf is CPlugSurface.Ellipsoid ellipsoid)
         {
             Ellipsoid = ellipsoid.Size;
-            SurfaceIndex = ellipsoid.U02;
+            SurfaceIndex = ellipsoid.SurfaceIndex;
         }
 
         if (surf is CPlugSurface.Sphere sphere)
         {
             Sphere = sphere.Size;
-            SurfaceIndex = sphere.U02;
+            SurfaceIndex = sphere.SurfaceIndex;
         }
 
         if (surf is CPlugSurface.Mesh mesh)
@@ -74,10 +74,10 @@ internal sealed class Surface : IStandalone
                 for (var i = 0; i < mesh.CookedTriangles.Length; i++)
                 {
                     var tri = mesh.CookedTriangles[i];
-                    inds[i * 4 + 0] = tri.U03;
-                    inds[i * 4 + 1] = tri.U02.X;
-                    inds[i * 4 + 2] = tri.U02.Y;
-                    inds[i * 4 + 3] = tri.U02.Z;
+                    inds[i * 4 + 0] = tri.SurfaceIndex;
+                    inds[i * 4 + 1] = tri.Indices.X;
+                    inds[i * 4 + 2] = tri.Indices.Y;
+                    inds[i * 4 + 3] = tri.Indices.Z;
                 }
 
                 Indices = inds;
@@ -94,10 +94,10 @@ internal sealed class Surface : IStandalone
                 for (var i = 0; i < mesh.Triangles.Length; i++)
                 {
                     var tri = mesh.Triangles[i];
-                    inds[i * 4 + 0] = tri.U04;
-                    inds[i * 4 + 1] = tri.U01.X;
-                    inds[i * 4 + 2] = tri.U01.Y;
-                    inds[i * 4 + 3] = tri.U01.Z;
+                    inds[i * 4 + 0] = tri.SurfaceIndex;
+                    inds[i * 4 + 1] = tri.Indices.X;
+                    inds[i * 4 + 2] = tri.Indices.Y;
+                    inds[i * 4 + 3] = tri.Indices.Z;
                 }
 
                 Indices = inds;
