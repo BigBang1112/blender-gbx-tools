@@ -8,6 +8,7 @@ internal sealed class Visual
     public byte[]? Vertices { get; }
     public int[]? Indices { get; }
     public byte[]? Normals { get; }
+    public byte[]? Colors { get; }
     public byte[][]? TexCoords { get; }
 
     public Visual()
@@ -22,6 +23,9 @@ internal sealed class Visual
 
         using var normalStream = new MemoryStream();
         using var normalWriter = new BinaryWriter(normalStream);
+
+        using var colorStream = new MemoryStream();
+        using var colorWriter = new BinaryWriter(colorStream);
 
         if (visual.VertexStreams.Count == 0)
         {
@@ -57,6 +61,15 @@ internal sealed class Visual
                     normalWriter.Write(normal.Y);
                     normalWriter.Write(normal.Z);
                 }
+                
+                if (stream.Colors.ContainsKey(0))
+                {
+                    foreach (var color in stream.Colors[0] ?? [])
+                    {
+                        colorWriter.Write(color);
+                    }
+                }
+                
             }
         }
 
@@ -65,6 +78,7 @@ internal sealed class Visual
         Vertices = vertexStream.Length == 0 ? null : vertexStream.ToArray();
         Indices = indices.Length == 0 ? null : indices;
         Normals = normalStream.Length == 0 ? null : normalStream.ToArray();
+        Colors = colorStream.Length == 0 ? null : colorStream.ToArray();
 
         if (visual.VertexStreams.Count == 0)
         {
