@@ -141,7 +141,7 @@ def create_multiple(material_set_dict, settings=None):
                     normal_map_node = apply_normal_map_tmuf(mat, texture_node)
                     mat.node_tree.links.new(principled_bsdf_node.inputs["Normal"], normal_map_node.outputs["Normal"])
 
-                elif texture_name == "BlendI":
+                elif texture_name == "BlendI" and texture_node.image is not None:
                     texture_node.image.colorspace_settings.name = "Non-Color"
 
         # TODO this part needs to be rewritten
@@ -255,6 +255,3 @@ def apply_normal_map_tmuf(mat, img_tex_node):
     mat.node_tree.links.new(normal_map_node.inputs["Color"], combine_color_node.outputs["Color"])
 
     return normal_map_node
-
-def apply_blend_intensity_map(img_tex_node):
-    img_tex_node.image.colorspace_settings.name = "Non-Color"

@@ -11,8 +11,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="GBX.NET" Version="2.3.0-nightly.20251202.c7a2121c" />
-		<PackageReference Include="GBX.NET.LZO" Version="2.1.2" />
+		<PackageReference Include="GBX.NET" Version="2.3.4" />
+		<PackageReference Include="GBX.NET.LZO" Version="2.1.4" />
 	</ItemGroup>
 
 </Project>
