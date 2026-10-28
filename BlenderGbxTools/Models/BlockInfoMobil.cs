@@ -14,20 +14,21 @@ internal sealed class BlockInfoMobil
     public Vec3 GeomTranslation { get; }
     public Vec3 GeomRotation { get; }
 
-    public BlockInfoMobil(External<CSceneMobil> mobil)
+    public BlockInfoMobil(CSceneMobil? mobil)
     {
-        if (mobil.Node is null)
+        if (mobil is null)
         {
             return;
         }
 
-        if (mobil.Node.Item?.Solid?.Tree is CPlugSolid solid)
+        if (mobil.Item?.Solid?.Model is CPlugSolid solid)
         {
-            var fileName = mobil.Node.Item.Solid.TreeFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(mobil.Node.Item.Solid.TreeFile.GetFullPath());
+            var modelFile = mobil.Item.Solid.References.Model.File;
+            var fileName = modelFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(modelFile.GetFullPath());
             Solid = new Solid(fileName, solid, standalone: false);
         }
 
-        ObjectLinks = mobil.Node
+        ObjectLinks = mobil
             .ObjectLink?
             .Select(x => new ObjectLink(x))
             .ToImmutableList();
@@ -37,13 +38,15 @@ internal sealed class BlockInfoMobil
     {
         if (mobil.SolidFid is not null)
         {
-            var fileName = mobil.SolidFidFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(mobil.SolidFidFile.GetFullPath());
+            var solidFile = mobil.References.SolidFid.File;
+            var fileName = solidFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(solidFile.GetFullPath());
             Solid = new Solid(fileName, mobil.SolidFid, standalone: false);
         }
 
         if (mobil.PrefabFid is not null)
         {
-            var fileName = mobil.PrefabFidFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(mobil.PrefabFidFile.GetFullPath());
+            var prefabFile = mobil.References.PrefabFid.File;
+            var fileName = prefabFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(prefabFile.GetFullPath());
             Prefab ??= new Prefab(fileName, mobil.PrefabFid, standalone: false);
         }
 

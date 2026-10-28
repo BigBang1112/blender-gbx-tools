@@ -13,14 +13,14 @@ internal static class CGameCtnBlockInfoExtensions
         var tmfSolids = blockInfo.AirMobils?
             .Concat(blockInfo.GroundMobils ?? [])
             .SelectMany(x => x)
-            .Select(x => x.Node?.Item?.Solid?.Tree)
+            .Select(x => x?.Item?.Solid?.Model)
             .OfType<CPlugSolid>() ?? [];
 
         var tmfObjectLinks = blockInfo.AirMobils?
             .Concat(blockInfo.GroundMobils ?? [])
             .SelectMany(x => x)
-            .SelectMany(x => x.Node?.ObjectLink ?? [])
-            .Select(x => x.Mobil?.Item?.Solid?.Tree)
+            .SelectMany(x => x?.ObjectLink ?? [])
+            .Select(x => x.Mobil?.Model?.Item?.Solid?.Model)
             .OfType<CPlugSolid>() ?? [];
 
         var mpSolids = blockInfo.VariantBaseAir?.Mobils?
@@ -63,12 +63,12 @@ internal static class CGameCtnBlockInfoExtensions
     {
         var solidSurfaceMaterials = blockInfo.GetAllSolids()
             .SelectMany(x => x.GetDistinctSurfaceMaterials())
-            .DistinctBy(surfMat => new { surfMat.SurfaceId, MaterialName = GbxPath.GetFileNameWithoutExtension(surfMat.MaterialFile?.FilePath) })
+            .DistinctBy(surfMat => new { surfMat.SurfaceId, MaterialName = GbxPath.GetFileNameWithoutExtension(surfMat.References.Material.File?.FilePath) })
             .Select(surfMat => new SurfaceMaterial(surfMat));
 
         var prefabSurfaceMaterials = blockInfo.GetAllPrefabs()
             .SelectMany(prefab => prefab.GetDistinctSurfaceMaterials())
-            .DistinctBy(surfMat => new { surfMat.SurfaceId, MaterialName = GbxPath.GetFileNameWithoutExtension(surfMat.MaterialFile?.FilePath) })
+            .DistinctBy(surfMat => new { surfMat.SurfaceId, MaterialName = GbxPath.GetFileNameWithoutExtension(surfMat.References.Material.File?.FilePath) })
             .Select(surfMat => new SurfaceMaterial(surfMat));
 
         return solidSurfaceMaterials

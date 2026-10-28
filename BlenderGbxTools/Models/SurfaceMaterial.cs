@@ -17,7 +17,7 @@ internal sealed class SurfaceMaterial
     public SurfaceMaterial(CPlugSurface.SurfMaterial material)
     {
         SurfaceId = material.SurfaceId;
-        Name = GbxPath.GetFileNameWithoutExtension(material.MaterialFile?.FilePath);
+        Name = GbxPath.GetFileNameWithoutExtension(material.References.Material.File?.FilePath);
         Material = material.Material is CPlugMaterial plugMaterial ? new Material(plugMaterial) : null;
     }
 }

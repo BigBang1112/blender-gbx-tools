@@ -31,12 +31,12 @@ internal sealed class ShadedGeom
 
     private string? GetMaterialName(CPlugSolid2Model solid2, CPlugSolid2Model.ShadedGeom geom)
     {
-        if (solid2.Materials?.Length > geom.MaterialIndex)
+        if (solid2.Materials?.Count > geom.MaterialIndex)
         {
-            return GbxPath.GetFileNameWithoutExtension(solid2.Materials[geom.MaterialIndex].File?.FilePath);
+            return GbxPath.GetFileNameWithoutExtension(solid2.Materials.Get(geom.MaterialIndex).File?.FilePath);
         }
 
-        if (solid2.MaterialInsts?.Length > geom.MaterialIndex)
+        if (solid2.MaterialInsts?.Count > geom.MaterialIndex)
         {
             return solid2.MaterialInsts[geom.MaterialIndex].GetMaterialName();
         }

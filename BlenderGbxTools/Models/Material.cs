@@ -32,8 +32,7 @@ internal sealed class Material
                     continue;
                 }
 
-                // bitmap.TextureFile
-                textures[textureName] = new Texture(bitmap.TextureFile?.GetFullPath(), texture);
+                textures[textureName] = new Texture(bitmap.References.Texture.File?.GetFullPath(), texture);
             }
         }
         else if (material.DeviceMaterials?.Length > 0)

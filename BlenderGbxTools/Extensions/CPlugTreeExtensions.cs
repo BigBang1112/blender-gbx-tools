@@ -7,6 +7,6 @@ internal static class CPlugTreeExtensions
 {
     public static string GetMaterialName(this CPlugTree tree)
     {
-        return GbxPath.GetFileNameWithoutExtension(tree.ShaderFile?.FilePath) ?? Guid.NewGuid().ToString();
+        return GbxPath.GetFileNameWithoutExtension(tree.References.Shader.File?.FilePath) ?? Guid.NewGuid().ToString();
     }
 }

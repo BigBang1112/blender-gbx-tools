@@ -11,7 +11,7 @@ internal static class CPlugSolid2ModelExtensions
     {
         var materials = ImmutableDictionary.CreateBuilder<string, Material?>();
 
-        foreach (var mat in solid2.Materials ?? [])
+        foreach (var mat in solid2.References.Materials ?? [])
         {
             var materialName = GbxPath.GetFileNameWithoutExtension(mat.File?.FilePath) ?? Guid.NewGuid().ToString();
             var material = mat.Node is null ? null : new Material(mat.Node);

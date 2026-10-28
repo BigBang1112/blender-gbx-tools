@@ -17,7 +17,7 @@ internal sealed class Texture
     public Texture(string? filePath, CPlugBitmap texture)
     {
         GbxPath = filePath;
-        ImagePath = texture.ImageFile?.GetFullPath();
+        ImagePath = texture.References.Image.File?.GetFullPath();
         ScaleU = texture.DefaultTexCoordScale.X;
         ScaleV = texture.DefaultTexCoordScale.Y;
     }

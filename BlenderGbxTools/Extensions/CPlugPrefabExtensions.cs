@@ -90,7 +90,7 @@ internal static class CPlugPrefabExtensions
         }
 
         return materials
-            .DistinctBy(surfMat => new { surfMat.SurfaceId, MaterialName = GbxPath.GetFileNameWithoutExtension(surfMat.MaterialFile?.FilePath) });
+            .DistinctBy(surfMat => new { surfMat.SurfaceId, MaterialName = GbxPath.GetFileNameWithoutExtension(surfMat.References.Material.File?.FilePath) });
     }
 
     public static ImmutableList<SurfaceMaterial> GetAllSurfaceMaterials(this CPlugPrefab prefab)

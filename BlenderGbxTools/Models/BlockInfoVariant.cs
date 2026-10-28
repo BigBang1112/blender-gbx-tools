@@ -34,7 +34,8 @@ internal sealed class BlockInfoVariant
 
         if (variant.WaypointTriggerSolid is CPlugSolid waypointSolid)
         {
-            var fileName = variant.WaypointTriggerSolidFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(variant.WaypointTriggerSolidFile.GetFullPath());
+            var waypointFile = variant.References.WaypointTriggerSolid.File;
+            var fileName = waypointFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(waypointFile.GetFullPath());
             Waypoint = new Solid(fileName, waypointSolid, standalone: false);
         }
 
@@ -44,7 +45,8 @@ internal sealed class BlockInfoVariant
 
         if (variant.HelperSolidFid is CPlugSolid helperSolid)
         {
-            var fileName = variant.HelperSolidFidFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(variant.HelperSolidFidFile.GetFullPath());
+            var helperFile = variant.References.HelperSolidFid.File;
+            var fileName = helperFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(helperFile.GetFullPath());
             Helper = new Solid(fileName, helperSolid, standalone: false);
         }
 
@@ -53,9 +55,9 @@ internal sealed class BlockInfoVariant
         SpawnYaw = variant.SpawnYaw;
     }
 
-    public BlockInfoVariant(External<CSceneMobil>[][] mobils, CGameCtnBlockUnitInfo[] units, Iso4? spawnLoc, CSceneMobil? helperMobil)
+    public BlockInfoVariant(NodeRefList<CSceneMobil>[] mobils, NodeRefList<CGameCtnBlockUnitInfo?> units, Iso4? spawnLoc, CSceneMobil? helperMobil)
     {
-        if (mobils.Length > 0 && mobils.Any(x => x.Length > 0))
+        if (mobils.Length > 0 && mobils.Any(x => x.Count > 0))
         {
             Mobils = mobils
                 .Select(mobilsRow =>
@@ -65,12 +67,14 @@ internal sealed class BlockInfoVariant
         }
 
         Units = units
+            .OfType<CGameCtnBlockUnitInfo>()
             .Select(unit => new BlockInfoUnit(unit))
             .ToImmutableArray();
 
-        if (helperMobil?.Item?.Solid?.Tree is CPlugSolid solid)
+        if (helperMobil?.Item?.Solid?.Model is CPlugSolid solid)
         {
-            var fileName = helperMobil.Item.Solid.TreeFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(helperMobil.Item.Solid.TreeFile.GetFullPath());
+            var modelFile = helperMobil.Item.Solid.References.Model.File;
+            var fileName = modelFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(modelFile.GetFullPath());
             Helper = new Solid(fileName, solid, standalone: false);
         }
 

@@ -29,7 +29,7 @@ internal static class CPlugSolidExtensions
             .Select(x => x.Surface)
             .OfType<CPlugSurface>()
             .SelectMany(x => x.Materials)
-            .DistinctBy(surfMat => new { surfMat.SurfaceId, MaterialName = GbxPath.GetFileNameWithoutExtension(surfMat.MaterialFile?.FilePath) });
+            .DistinctBy(surfMat => new { surfMat.SurfaceId, MaterialName = GbxPath.GetFileNameWithoutExtension(surfMat.References.Material.File?.FilePath) });
     }
 
     public static ImmutableList<SurfaceMaterial> GetAllSurfaceMaterials(this CPlugSolid solid)

@@ -11,9 +11,10 @@ internal sealed class ObjectLink
 
     public ObjectLink(CSceneObjectLink objectLink)
     {
-        if (objectLink.Mobil?.Item?.Solid?.Tree is CPlugSolid solid)
+        if (objectLink.Mobil?.Model?.Item?.Solid?.Model is CPlugSolid solid)
         {
-            var fileName = objectLink.Mobil.Item.Solid.TreeFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(objectLink.Mobil.Item.Solid.TreeFile.GetFullPath());
+            var modelFile = objectLink.Mobil.Model.Item.Solid.References.Model.File;
+            var fileName = modelFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(modelFile.GetFullPath());
             Solid = new Solid(fileName, solid, standalone: false);
         }
 

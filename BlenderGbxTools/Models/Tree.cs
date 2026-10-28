@@ -38,8 +38,9 @@ internal sealed class Tree
         if (tree is CPlugTreeVisualMip mip)
         {
             mipDict = mip.Levels
+                .Where(x => x.Tree is not null)
                 .DistinctBy(x => x.FarZ) // FarZ can be duplicated sometimes, epic Nadeo. should be additionally logged
-                .ToImmutableDictionary(x => x.FarZ, x => new Tree(x.Tree));
+                .ToImmutableDictionary(x => x.FarZ, x => new Tree(x.Tree!));
         }
 
         var light = default(Light);
@@ -56,10 +57,10 @@ internal sealed class Tree
             surface = new Surface(null, plugSurface, standalone: false);
         }
 
-        Name = tree.Name ?? "[unnamed]";
+        Name = tree.PlugId ?? "[unnamed]";
         Visual = visual;
         Location = LocationToByteArray(tree);
-        Children = tree.Children.Count == 0 ? null : tree.Children.Select(x => new Tree(x)).ToImmutableList();
+        Children = tree.Children is not { Count: > 0 } ? null : tree.Children.Select(x => new Tree(x)).ToImmutableList();
         VisualMip = mipDict;
         Flags = tree.Flags;
         Light = light;
