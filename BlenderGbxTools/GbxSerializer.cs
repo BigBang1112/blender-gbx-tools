@@ -1,8 +1,10 @@
-﻿using BlenderGbxTools.Models;
+﻿using BlenderGbxTools.Mapping;
+using BlenderGbxTools.Models;
 using GBX.NET.Engines.Game;
 using GBX.NET.Engines.GameData;
 using GBX.NET.Engines.MwFoundations;
 using GBX.NET.Engines.Plug;
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace BlenderGbxTools;
@@ -11,28 +13,64 @@ internal static class GbxSerializer
 {
     public static void Serialize(Stream stream, string fileName, CMwNod? node)
     {
+        var startTime = Stopwatch.GetTimestamp();
+        var context = new MappingContext();
+
         switch (node)
         {
             case CPlugSolid solid:
-                JsonSerializer.Serialize(stream, new Solid(fileName, solid), AppJsonContext.Default.Solid);
+                JsonSerializer.Serialize(stream, Solid.From(fileName, solid, context) with
+                {
+                    Materials = context.GetMaterials(),
+                    SurfaceMaterials = context.GetSurfaceMaterials(),
+                    ExecutionTimeInSeconds = GetElapsedSeconds(startTime),
+                }, AppJsonContext.Default.Solid);
                 break;
             case CPlugSolid2Model solid2:
-                JsonSerializer.Serialize(stream, new Solid2(fileName, solid2), AppJsonContext.Default.Solid2);
+                JsonSerializer.Serialize(stream, Solid2.From(fileName, solid2, context) with
+                {
+                    Materials = context.GetMaterials(),
+                    ExecutionTimeInSeconds = GetElapsedSeconds(startTime),
+                }, AppJsonContext.Default.Solid2);
                 break;
             case CGameCtnBlockInfo blockInfo:
-                JsonSerializer.Serialize(stream, new BlockInfo(blockInfo), AppJsonContext.Default.BlockInfo);
+                JsonSerializer.Serialize(stream, BlockInfo.From(blockInfo, context) with
+                {
+                    Materials = context.GetMaterials(),
+                    SurfaceMaterials = context.GetSurfaceMaterials(),
+                    ExecutionTimeInSeconds = GetElapsedSeconds(startTime),
+                }, AppJsonContext.Default.BlockInfo);
                 break;
             case CPlugSurface surface:
-                JsonSerializer.Serialize(stream, new Surface(fileName, surface), AppJsonContext.Default.Surface);
+                JsonSerializer.Serialize(stream, Surface.From(fileName, surface, context) with
+                {
+                    SurfaceMaterials = context.GetSurfaceMaterials(),
+                    ExecutionTimeInSeconds = GetElapsedSeconds(startTime),
+                }, AppJsonContext.Default.Surface);
                 break;
             case CGameItemModel item:
-                JsonSerializer.Serialize(stream, new Item(fileName, item), AppJsonContext.Default.Item);
+                JsonSerializer.Serialize(stream, Item.From(fileName, item, context) with
+                {
+                    Materials = context.GetMaterials(),
+                    SurfaceMaterials = context.GetSurfaceMaterials(),
+                    ExecutionTimeInSeconds = GetElapsedSeconds(startTime),
+                }, AppJsonContext.Default.Item);
                 break;
             case CPlugPrefab prefab:
-                JsonSerializer.Serialize(stream, new Prefab(fileName, prefab), AppJsonContext.Default.Prefab);
+                JsonSerializer.Serialize(stream, Prefab.From(fileName, prefab, context) with
+                {
+                    Materials = context.GetMaterials(),
+                    SurfaceMaterials = context.GetSurfaceMaterials(),
+                    ExecutionTimeInSeconds = GetElapsedSeconds(startTime),
+                }, AppJsonContext.Default.Prefab);
                 break;
             default:
                 throw new NotSupportedException("Serialization of this node is not supported.");
         }
+    }
+
+    private static double GetElapsedSeconds(long startTime)
+    {
+        return Stopwatch.GetElapsedTime(startTime).TotalSeconds;
     }
 }

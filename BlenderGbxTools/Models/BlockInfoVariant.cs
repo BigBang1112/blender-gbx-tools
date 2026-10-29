@@ -1,4 +1,6 @@
-﻿using GBX.NET;
+﻿using BlenderGbxTools.Extensions;
+using BlenderGbxTools.Mapping;
+using GBX.NET;
 using GBX.NET.Engines.Game;
 using GBX.NET.Engines.Plug;
 using GBX.NET.Engines.Scene;
@@ -7,73 +9,66 @@ using System.Runtime.InteropServices;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class BlockInfoVariant
+internal sealed record BlockInfoVariant
 {
-    public ImmutableArray<ImmutableArray<BlockInfoMobil>> Mobils { get; } = [];
-    public ImmutableArray<BlockInfoUnit> Units { get; } = [];
-    public Solid? Waypoint { get; }
-    public Solid? Helper { get; }
+    public ImmutableArray<ImmutableArray<BlockInfoMobil>> Mobils { get; init; } = [];
+    public ImmutableArray<BlockInfoUnit> Units { get; init; } = [];
+    public Solid? Waypoint { get; init; }
+    public Solid? Helper { get; init; }
 
-    public byte[]? SpawnLoc { get; }
-    public Vec3? SpawnTrans { get; }
-    public float? SpawnPitch { get; }
-    public float? SpawnYaw { get; }
+    public byte[]? SpawnLoc { get; init; }
+    public Vec3? SpawnTrans { get; init; }
+    public float? SpawnPitch { get; init; }
+    public float? SpawnYaw { get; init; }
 
-    public BlockInfoVariant()
+    public static BlockInfoVariant From(CGameCtnBlockInfoVariant variant, MappingContext context)
     {
-        
-    }
-
-    public BlockInfoVariant(CGameCtnBlockInfoVariant variant)
-    {
-        Mobils = variant.Mobils?
-            .Select(mobils =>
-                mobils.Select(mobil => new BlockInfoMobil(mobil))
-                .ToImmutableArray())
-            .ToImmutableArray() ?? [];
-
-        if (variant.WaypointTriggerSolid is CPlugSolid waypointSolid)
+        return new BlockInfoVariant
         {
-            var fileName = variant.WaypointTriggerSolidFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(variant.WaypointTriggerSolidFile.GetFullPath());
-            Waypoint = new Solid(fileName, waypointSolid, standalone: false);
-        }
-
-        Units = variant.BlockUnitModels?
-            .Select(unit => new BlockInfoUnit(unit))
-            .ToImmutableArray() ?? [];
-
-        if (variant.HelperSolidFid is CPlugSolid helperSolid)
-        {
-            var fileName = variant.HelperSolidFidFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(variant.HelperSolidFidFile.GetFullPath());
-            Helper = new Solid(fileName, helperSolid, standalone: false);
-        }
-
-        SpawnTrans = variant.SpawnTrans;
-        SpawnPitch = variant.SpawnPitch;
-        SpawnYaw = variant.SpawnYaw;
-    }
-
-    public BlockInfoVariant(External<CSceneMobil>[][] mobils, CGameCtnBlockUnitInfo[] units, Iso4? spawnLoc, CSceneMobil? helperMobil)
-    {
-        if (mobils.Length > 0 && mobils.Any(x => x.Length > 0))
-        {
-            Mobils = mobils
-                .Select(mobilsRow =>
-                    mobilsRow.Select(mobil => new BlockInfoMobil(mobil))
+            Mobils = variant.Mobils?
+                .Select(mobils =>
+                    mobils.Select(mobil => BlockInfoMobil.From(mobil, context))
                     .ToImmutableArray())
-                .ToImmutableArray();
-        }
+                .ToImmutableArray() ?? [],
+            Waypoint = variant.WaypointTriggerSolid is CPlugSolid waypointSolid
+                ? Solid.From(variant.References.WaypointTriggerSolid.File.GetFileNameOrUniqueName(), waypointSolid, context)
+                : null,
+            Units = variant.BlockUnitModels?
+                .Select(BlockInfoUnit.From)
+                .ToImmutableArray() ?? [],
+            Helper = variant.HelperSolidFid is CPlugSolid helperSolid
+                ? Solid.From(variant.References.HelperSolidFid.File.GetFileNameOrUniqueName(), helperSolid, context)
+                : null,
+            SpawnTrans = variant.SpawnTrans,
+            SpawnPitch = variant.SpawnPitch,
+            SpawnYaw = variant.SpawnYaw,
+        };
+    }
 
-        Units = units
-            .Select(unit => new BlockInfoUnit(unit))
-            .ToImmutableArray();
+    public static BlockInfoVariant From(NodeRefList<CSceneMobil>[] mobils, NodeRefList<CGameCtnBlockUnitInfo?> units, Iso4? spawnLoc, CSceneMobil? helperMobil, MappingContext context)
+    {
+        var helper = default(Solid);
 
-        if (helperMobil?.Item?.Solid?.Tree is CPlugSolid solid)
+        if (helperMobil?.Item?.Solid?.Model is CPlugSolid solid)
         {
-            var fileName = helperMobil.Item.Solid.TreeFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(helperMobil.Item.Solid.TreeFile.GetFullPath());
-            Helper = new Solid(fileName, solid, standalone: false);
+            helper = Solid.From(helperMobil.Item.Solid.References.Model.File.GetFileNameOrUniqueName(), solid, context);
         }
 
-        SpawnLoc = spawnLoc.HasValue ? MemoryMarshal.AsBytes([spawnLoc.Value]).ToArray() : null;
+        return new BlockInfoVariant
+        {
+            Mobils = mobils.Length > 0 && mobils.Any(x => x.Count > 0)
+                ? mobils
+                    .Select(mobilsRow =>
+                        mobilsRow.Select(mobil => BlockInfoMobil.From(mobil, context))
+                        .ToImmutableArray())
+                    .ToImmutableArray()
+                : [],
+            Units = units
+                .OfType<CGameCtnBlockUnitInfo>()
+                .Select(BlockInfoUnit.From)
+                .ToImmutableArray(),
+            Helper = helper,
+            SpawnLoc = spawnLoc.HasValue ? MemoryMarshal.AsBytes([spawnLoc.Value]).ToArray() : null,
+        };
     }
 }

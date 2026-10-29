@@ -3,21 +3,19 @@ using GBX.NET.Engines.Plug;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class SurfaceMaterial
+internal sealed record SurfaceMaterial
 {
-    public CPlugSurface.MaterialId? SurfaceId { get; }
-    public string? Name { get; }
-    public Material? Material { get; }
+    public CPlugSurface.MaterialId? SurfaceId { get; init; }
+    public string? Name { get; init; }
+    public Material? Material { get; init; }
 
-    public SurfaceMaterial()
+    public static SurfaceMaterial From(CPlugSurface.SurfMaterial material)
     {
-        
-    }
-
-    public SurfaceMaterial(CPlugSurface.SurfMaterial material)
-    {
-        SurfaceId = material.SurfaceId;
-        Name = GbxPath.GetFileNameWithoutExtension(material.MaterialFile?.FilePath);
-        Material = material.Material is CPlugMaterial plugMaterial ? new Material(plugMaterial) : null;
+        return new SurfaceMaterial
+        {
+            SurfaceId = material.SurfaceId,
+            Name = GbxPath.GetFileNameWithoutExtension(material.References.Material.File?.FilePath),
+            Material = material.Material is CPlugMaterial plugMaterial ? Material.From(plugMaterial) : null,
+        };
     }
 }

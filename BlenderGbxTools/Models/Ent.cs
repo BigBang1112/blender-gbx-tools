@@ -1,49 +1,42 @@
-﻿using GBX.NET;
+﻿using BlenderGbxTools.Mapping;
+using GBX.NET;
 using GBX.NET.Engines.Plug;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class Ent
+internal sealed record Ent
 {
-    public Solid2? Mesh { get; }
-    public Surface? Surface { get; }
-    public Prefab? Prefab { get; }
+    public Solid2? Mesh { get; init; }
+    public Surface? Surface { get; init; }
+    public Prefab? Prefab { get; init; }
 
-    public Vec3 Position { get; }
-    public Quat Rotation { get; }
+    public Vec3 Position { get; init; }
+    public Quat Rotation { get; init; }
 
-    public Ent(CPlugPrefab.EntRef ent)
+    public static Ent From(CPlugPrefab.EntRef ent, MappingContext context)
     {
+        var mesh = default(CPlugSolid2Model);
+        var shape = default(CPlugSurface);
+
         switch (ent.Model)
         {
             case CPlugStaticObjectModel staticModel:
-                if (staticModel.Mesh is not null)
-                {
-                    Mesh = new Solid2("", staticModel.Mesh, standalone: false);
-                }
-
-                if (staticModel.Shape is not null)
-                {
-                    Surface = new Surface(null, staticModel.Shape, standalone: false);
-                }
+                mesh = staticModel.Mesh;
+                shape = staticModel.Shape;
                 break;
             case CPlugDynaObjectModel dynaModel:
-                if (dynaModel.Mesh is not null)
-                {
-                    Mesh = new Solid2("", dynaModel.Mesh, standalone: false);
-                }
-
-                if (dynaModel.StaticShape is not null)
-                {
-                    Surface = new Surface(null, dynaModel.StaticShape, standalone: false);
-                }
-                break;
-            case CPlugPrefab prefab:
-                Prefab = new Prefab("", prefab, standalone: false);
+                mesh = dynaModel.Mesh;
+                shape = dynaModel.StaticShape;
                 break;
         }
 
-        Position = ent.Position;
-        Rotation = ent.Rotation;
+        return new Ent
+        {
+            Mesh = mesh is null ? null : Solid2.From("", mesh, context),
+            Surface = shape is null ? null : Surface.From(null, shape, context),
+            Prefab = ent.Model is CPlugPrefab prefab ? Prefab.From("", prefab, context) : null,
+            Position = ent.Position,
+            Rotation = ent.Rotation,
+        };
     }
 }

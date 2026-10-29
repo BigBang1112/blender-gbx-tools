@@ -6,28 +6,11 @@ on:
   pull_request:
     branches: [ main, dev ]
 
-jobs:
-  build:
+permissions:
+  contents: read
 
-    runs-on: ${{ matrix.os }}
-    
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    
-    steps:
-    - uses: actions/checkout@v6
-  
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 10.0.x
-    
-    - name: Restore dependencies
-      run: dotnet restore
-    
-    - name: Build
-      run: dotnet build -c Release --no-restore -p:ContinuousIntegrationBuild=true
-    
-    - name: Test
-      run: dotnet test -c Release --no-build --verbosity normal --collect:"XPlat Code Coverage" --results-directory ./coverage
+jobs:
+  ci:
+    uses: bigbang1112/workflows/.github/workflows/dotnet-ci.yml@main
+    with:
+      dotnet-version: 10.0.x

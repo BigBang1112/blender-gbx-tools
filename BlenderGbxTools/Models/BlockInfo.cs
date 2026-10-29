@@ -1,44 +1,31 @@
-﻿using BlenderGbxTools.Extensions;
+﻿using BlenderGbxTools.Mapping;
 using GBX.NET.Engines.Game;
 using System.Collections.Immutable;
-using System.Diagnostics;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class BlockInfo : IStandalone
+internal sealed record BlockInfo
 {
-    public string? Name { get; }
-    public BlockInfoVariant? VariantAir { get; }
-    public BlockInfoVariant? VariantGround { get; }
+    public string? Name { get; init; }
+    public BlockInfoVariant? VariantAir { get; init; }
+    public BlockInfoVariant? VariantGround { get; init; }
 
-    public ImmutableDictionary<string, Material?>? Materials { get; }
-    public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; }
+    // Only set on the root model
+    public ImmutableDictionary<string, Material?>? Materials { get; init; }
+    public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; init; }
+    public double? ExecutionTimeInSeconds { get; init; }
 
-    public double ExecutionTimeInSeconds { get; }
-
-    public BlockInfo()
+    public static BlockInfo From(CGameCtnBlockInfo blockInfo, MappingContext context)
     {
-        
-    }
-
-    public BlockInfo(CGameCtnBlockInfo blockInfo, bool standalone = true)
-    {
-        var startTime = Stopwatch.GetTimestamp();
-
-        Name = blockInfo.Ident.Id;
-
-        VariantAir = blockInfo.VariantBaseAir is null
-            ? new BlockInfoVariant(blockInfo.AirMobils ?? [], blockInfo.AirBlockUnitInfos ?? [], blockInfo.SpawnLocAir, blockInfo.AirHelperMobil)
-            : new BlockInfoVariant(blockInfo.VariantBaseAir);
-
-        VariantGround = blockInfo.VariantBaseGround is null
-            ? new BlockInfoVariant(blockInfo.GroundMobils ?? [], blockInfo.GroundBlockUnitInfos ?? [], blockInfo.SpawnLocGround, blockInfo.GroundHelperMobil)
-            : new BlockInfoVariant(blockInfo.VariantBaseGround);
-
-        // Materials not in this dictionary use the default material
-        Materials = standalone ? blockInfo.GetAllMaterials() : null;
-        SurfaceMaterials = standalone ? blockInfo.GetAllSurfaceMaterials() : null;
-
-        ExecutionTimeInSeconds = Stopwatch.GetElapsedTime(startTime).TotalSeconds;
+        return new BlockInfo
+        {
+            Name = blockInfo.Ident.Id,
+            VariantAir = blockInfo.VariantBaseAir is null
+                ? BlockInfoVariant.From(blockInfo.AirMobils ?? [], blockInfo.AirBlockUnitInfos ?? [], blockInfo.SpawnLocAir, blockInfo.AirHelperMobil, context)
+                : BlockInfoVariant.From(blockInfo.VariantBaseAir, context),
+            VariantGround = blockInfo.VariantBaseGround is null
+                ? BlockInfoVariant.From(blockInfo.GroundMobils ?? [], blockInfo.GroundBlockUnitInfos ?? [], blockInfo.SpawnLocGround, blockInfo.GroundHelperMobil, context)
+                : BlockInfoVariant.From(blockInfo.VariantBaseGround, context),
+        };
     }
 }

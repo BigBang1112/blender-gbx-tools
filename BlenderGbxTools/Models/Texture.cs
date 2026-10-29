@@ -2,23 +2,21 @@
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class Texture
+internal sealed record Texture
 {
-    public string? GbxPath { get; }
-    public string? ImagePath { get; }
-    public float ScaleU { get; }
-    public float ScaleV { get; }
+    public string? GbxPath { get; init; }
+    public string? ImagePath { get; init; }
+    public float ScaleU { get; init; }
+    public float ScaleV { get; init; }
 
-    public Texture()
+    public static Texture From(string? filePath, CPlugBitmap texture)
     {
-        
-    }
-
-    public Texture(string? filePath, CPlugBitmap texture)
-    {
-        GbxPath = filePath;
-        ImagePath = texture.ImageFile?.GetFullPath();
-        ScaleU = texture.DefaultTexCoordScale.X;
-        ScaleV = texture.DefaultTexCoordScale.Y;
+        return new Texture
+        {
+            GbxPath = filePath,
+            ImagePath = texture.References.Image.File?.GetFullPath(),
+            ScaleU = texture.DefaultTexCoordScale.X,
+            ScaleV = texture.DefaultTexCoordScale.Y,
+        };
     }
 }

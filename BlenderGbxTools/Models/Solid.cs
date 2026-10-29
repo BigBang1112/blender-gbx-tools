@@ -1,36 +1,25 @@
-﻿using BlenderGbxTools.Extensions;
+﻿using BlenderGbxTools.Mapping;
 using GBX.NET.Engines.Plug;
 using System.Collections.Immutable;
-using System.Diagnostics;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class Solid : IStandalone
+internal sealed record Solid
 {
-    public string? Name { get; }
-    public Tree? Tree { get; }
+    public string? Name { get; init; }
+    public Tree? Tree { get; init; }
 
-    public ImmutableDictionary<string, Material?>? Materials { get; }
-    public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; }
+    // Only set on the root model
+    public ImmutableDictionary<string, Material?>? Materials { get; init; }
+    public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; init; }
+    public double? ExecutionTimeInSeconds { get; init; }
 
-    public double ExecutionTimeInSeconds { get; }
-
-    public Solid()
+    public static Solid From(string fileName, CPlugSolid solid, MappingContext context)
     {
-        
-    }
-
-    public Solid(string fileName, CPlugSolid solid, bool standalone = true)
-    {
-        var startTime = Stopwatch.GetTimestamp();
-
-        Name = fileName;
-        Tree = solid.Tree is CPlugTree tree ? new Tree(tree) : null;
-
-        // Materials not in this dictionary use the default material
-        Materials = standalone ? solid.GetAllMaterials() : null;
-        SurfaceMaterials = standalone ? solid.GetAllSurfaceMaterials() : null;
-
-        ExecutionTimeInSeconds = Stopwatch.GetElapsedTime(startTime).TotalSeconds;
+        return new Solid
+        {
+            Name = fileName,
+            Tree = solid.Tree is CPlugTree tree ? Tree.From(tree, context) : null,
+        };
     }
 }

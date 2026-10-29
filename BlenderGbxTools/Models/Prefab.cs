@@ -1,36 +1,25 @@
-﻿using BlenderGbxTools.Extensions;
+﻿using BlenderGbxTools.Mapping;
 using GBX.NET.Engines.Plug;
 using System.Collections.Immutable;
-using System.Diagnostics;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class Prefab : IStandalone
+internal sealed record Prefab
 {
-    public string? Name { get; }
-    public ImmutableList<Ent>? Ents { get; }
+    public string? Name { get; init; }
+    public ImmutableList<Ent>? Ents { get; init; }
 
-    public ImmutableDictionary<string, Material?>? Materials { get; }
-    public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; }
+    // Only set on the root model
+    public ImmutableDictionary<string, Material?>? Materials { get; init; }
+    public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; init; }
+    public double? ExecutionTimeInSeconds { get; init; }
 
-    public double ExecutionTimeInSeconds { get; }
-
-    public Prefab()
+    public static Prefab From(string fileName, CPlugPrefab prefab, MappingContext context)
     {
-        
-    }
-
-    public Prefab(string fileName, CPlugPrefab prefab, bool standalone = true)
-    {
-        var startTime = Stopwatch.GetTimestamp();
-
-        Name = fileName;
-        Ents = prefab.Ents.Length == 0 ? null : prefab.Ents.Select(x => new Ent(x)).ToImmutableList();
-
-        // Materials not in this dictionary use the default material
-        Materials = standalone ? prefab.GetAllMaterials() : null;
-        SurfaceMaterials = standalone ? prefab.GetAllSurfaceMaterials() : null;
-
-        ExecutionTimeInSeconds = Stopwatch.GetElapsedTime(startTime).TotalSeconds;
+        return new Prefab
+        {
+            Name = fileName,
+            Ents = prefab.Ents.Length == 0 ? null : prefab.Ents.Select(x => Ent.From(x, context)).ToImmutableList(),
+        };
     }
 }

@@ -16,6 +16,7 @@ def create(surface_dict, name, surface_material_set_list, settings=None):
     positions = surface_dict.get("Positions")
     indices = surface_dict.get("Indices")
     surfaceIndex = surface_dict.get("SurfaceIndex")
+    surface_material_indices = surface_dict.get("SurfaceMaterialIndices")
     if name is None:
         name = surface_dict.get("Name")
 
@@ -75,9 +76,8 @@ def create(surface_dict, name, surface_material_set_list, settings=None):
             applied_materials = {}
             
             for face_index, surface_idx in enumerate(surfaceIndices):
-                if surface_idx < len(surface_material_set_list):
-                    surf_mat = surface_material_set_list[surface_idx]
-                    
+                surf_mat = get_surface_material(surface_material_set_list, surface_material_indices, surface_idx)
+                if surf_mat is not None:
                     # Track which materials we've added
                     if surf_mat not in applied_materials:
                         mesh.materials.append(surf_mat)
@@ -88,8 +88,8 @@ def create(surface_dict, name, surface_material_set_list, settings=None):
                         mesh.polygons[face_index].material_index = applied_materials[surf_mat]
     # Apply global surface material if no per-face indices
     elif surfaceIndex is not None and surface_material_set_list:
-        if surfaceIndex < len(surface_material_set_list):
-            surf_mat = surface_material_set_list[surfaceIndex]
+        surf_mat = get_surface_material(surface_material_set_list, surface_material_indices, surfaceIndex)
+        if surf_mat is not None:
             mesh.materials.append(surf_mat)
             # All faces will use material index 0 by default
 
@@ -99,3 +99,15 @@ def create(surface_dict, name, surface_material_set_list, settings=None):
     bpy.context.collection.objects.link(surface_object)
 
     return surface_object
+
+def get_surface_material(surface_material_set_list, surface_material_indices, surface_index):
+    # Surface indices refer to the surface's own materials, which SurfaceMaterialIndices maps to the shared list
+    if surface_material_indices is not None:
+        if surface_index >= len(surface_material_indices):
+            return None
+        surface_index = surface_material_indices[surface_index]
+
+    if surface_index < len(surface_material_set_list):
+        return surface_material_set_list[surface_index]
+
+    return None

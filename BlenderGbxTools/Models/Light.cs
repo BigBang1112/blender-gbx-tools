@@ -4,59 +4,45 @@ using GBX.NET.Engines.Plug;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class Light
+internal sealed record Light
 {
-    public LightType Type { get; }
-    public float R { get; }
-    public float G { get; }
-    public float B { get; }
-    public float Intensity { get; }
-    public float? Radius { get; }
-    public float? AngleInner { get; }
-    public float? AngleOuter { get; }
-    public bool NightOnly { get; }
+    public LightType Type { get; init; }
+    public float R { get; init; }
+    public float G { get; init; }
+    public float B { get; init; }
+    public float Intensity { get; init; }
+    public float? Radius { get; init; }
+    public float? AngleInner { get; init; }
+    public float? AngleOuter { get; init; }
+    public bool NightOnly { get; init; }
 
-    public Light()
-    {
-        
-    }
-
-    public Light(CPlugTreeLight treeLight)
+    public static Light From(CPlugTreeLight treeLight)
     {
         if (treeLight.PlugLight is not CPlugLight plugLight)
         {
-            return;
+            return new Light();
         }
 
-        NightOnly = plugLight.NightOnly;
-
-        var gxLight = plugLight.Light;
-        
-        if (gxLight is null)
+        if (plugLight.Light is not GxLight gxLight)
         {
-            return;
+            return new Light { NightOnly = plugLight.NightOnly };
         }
 
-        R = gxLight.Color.X;
-        G = gxLight.Color.Y;
-        B = gxLight.Color.Z;
-        Intensity = gxLight.Intensity;
+        // GxLightSpot derives from GxLightBall, which derives from GxLightPoint
+        var ball = gxLight as GxLightBall;
+        var spot = gxLight as GxLightSpot;
 
-        if (gxLight is GxLightPoint point)
+        return new Light
         {
-            Type = LightType.POINT;
-        }
-
-        if (gxLight is GxLightBall ball)
-        {
-            Radius = ball.Radius;
-        }
-
-        if (gxLight is GxLightSpot spot)
-        {
-            Type = LightType.SPOT;
-            AngleInner = spot.AngleInner;
-            AngleOuter = spot.AngleOuter;
-        }
+            Type = spot is null ? LightType.POINT : LightType.SPOT,
+            R = gxLight.Color.X,
+            G = gxLight.Color.Y,
+            B = gxLight.Color.Z,
+            Intensity = gxLight.Intensity,
+            Radius = ball?.Radius,
+            AngleInner = spot?.AngleInner,
+            AngleOuter = spot?.AngleOuter,
+            NightOnly = plugLight.NightOnly,
+        };
     }
 }

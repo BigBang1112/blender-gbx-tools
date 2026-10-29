@@ -1,22 +1,16 @@
 ﻿using BlenderGbxTools.Extensions;
-using GBX.NET;
 using GBX.NET.Engines.Plug;
 using System.Collections.Immutable;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class Material
+internal sealed record Material
 {
-    public ImmutableDictionary<string, Texture>? Textures { get; }
-    public CPlugSurface.MaterialId SurfaceId { get; }
-    public string? Shader { get; }
+    public ImmutableDictionary<string, Texture>? Textures { get; init; }
+    public CPlugSurface.MaterialId SurfaceId { get; init; }
+    public string? Shader { get; init; }
 
-    public Material()
-    {
-        
-    }
-
-    public Material(CPlugMaterial material)
+    public static Material From(CPlugMaterial material)
     {
         var textures = ImmutableDictionary.CreateBuilder<string, Texture>();
 
@@ -32,8 +26,7 @@ internal sealed class Material
                     continue;
                 }
 
-                // bitmap.TextureFile
-                textures[textureName] = new Texture(bitmap.TextureFile?.GetFullPath(), texture);
+                textures[textureName] = Texture.From(bitmap.References.Texture.File?.GetFullPath(), texture);
             }
         }
         else if (material.DeviceMaterials?.Length > 0)
@@ -45,13 +38,16 @@ internal sealed class Material
             // often case with special effects?
         }
 
-        Textures = textures.ToImmutable();
-        SurfaceId = material.SurfaceId;
-        Shader = material.GetShaderName();
+        return new Material
+        {
+            Textures = textures.ToImmutable(),
+            SurfaceId = material.SurfaceId,
+            Shader = material.GetShaderName(),
+        };
     }
 
-    public Material(CPlugMaterialUserInst mat)
+    public static Material From(CPlugMaterialUserInst mat)
     {
-        SurfaceId = mat.SurfacePhysicId;
+        return new Material { SurfaceId = mat.SurfacePhysicId };
     }
 }
