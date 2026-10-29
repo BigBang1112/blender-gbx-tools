@@ -1,80 +1,36 @@
-name: Build and Package
+name: Publish
 
 on:
-  release:
-    types: [published]
-  
-env:
-  EXECUTABLE_NAME: BlenderGbxTools
-  
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to release, created at the selected commit if it doesn't exist
+        type: string
+        required: true
+      description:
+        description: Text before the release notes
+        type: string
+        default: ""
+
 permissions:
-  contents: write # important for release description edit and asset upload
-  packages: read
+  contents: read
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            executable-extension: .exe
-          - os: ubuntu-latest
-            executable-extension: ""
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 10.0.x
-
-    - name: Publish application
-      run: dotnet publish ${{ env.EXECUTABLE_NAME }} -o ./publish
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build-${{ matrix.os }}
-        path: ./publish/${{ env.EXECUTABLE_NAME }}${{ matrix.executable-extension }}
-        retention-days: 1
-
-  package:
-    needs: build
-    runs-on: ubuntu-latest
-    
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      RELEASE_BODY: ${{ github.event.release.body }}
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        pattern: build-*
-        path: ./BlenderPlugin
-        merge-multiple: true
-
-    - name: Create plugin zip
-      run: |
-        cd BlenderPlugin
-        zip -r ../BlenderGbxTools.zip .
-        cd ..
-
-    - name: Calculate SHA256
-      run: |
-        sha256sum "BlenderGbxTools.zip" | awk '{print $1}'
-
-    - name: Upload BlenderGbxTools.zip to this release
-      run: gh release upload ${{ github.ref_name }} BlenderGbxTools.zip
-        
-    - name: Set release information
-      run: |
-        FINAL_BODY="${RELEASE_BODY}
-          
-        Assets were automatically generated using the [publish workflow](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})."
-        gh release edit ${{ github.ref_name }} -n "$FINAL_BODY"
+  publish:
+    uses: bigbang1112/workflows/.github/workflows/publish-app-immutable.yml@main
+    permissions:
+      contents: write
+    with:
+      project: BlenderGbxTools
+      dotnet-version: 10.0.x
+      files: |
+        BlenderGbxTools
+        BlenderGbxTools.exe
+      package-directory: BlenderPlugin
+      merge-runners: true
+      asset-name: BlenderGbxTools
+      tag: ${{ inputs.tag }}
+      release-description: ${{ inputs.description }}
+      generate-release-notes: true
