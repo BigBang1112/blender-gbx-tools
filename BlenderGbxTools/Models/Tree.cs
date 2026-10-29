@@ -48,7 +48,7 @@ internal sealed record Tree
             Flags = tree.Flags,
             Light = tree is CPlugTreeLight treeLight ? Light.From(treeLight) : null,
             Material = material,
-            Surface = tree.Surface is CPlugSurface plugSurface ? Surface.From(null, plugSurface) : null,
+            Surface = tree.Surface is CPlugSurface plugSurface ? Surface.From(null, plugSurface, context) : null,
             Visible = tree.IsVisible,
         };
     }

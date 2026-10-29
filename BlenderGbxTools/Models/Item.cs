@@ -14,6 +14,7 @@ internal sealed record Item
 
     // Only set on the root model
     public ImmutableDictionary<string, Material?>? Materials { get; init; }
+    public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; init; }
     public double? ExecutionTimeInSeconds { get; init; }
 
     public static Item From(string fileName, CGameItemModel item, MappingContext context)

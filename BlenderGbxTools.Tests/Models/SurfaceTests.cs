@@ -1,3 +1,4 @@
+using BlenderGbxTools.Mapping;
 using BlenderGbxTools.Models;
 using BlenderGbxTools.Tests.Helpers;
 using GBX.NET;
@@ -14,7 +15,7 @@ internal sealed class SurfaceTests
         var surface = new CPlugSurface { Surf = new CPlugSurface.Sphere { Size = 2.5f, SurfaceIndex = 3 } };
 
         // Act
-        var result = Surface.From("Ball.Shape.Gbx", surface);
+        var result = Surface.From("Ball.Shape.Gbx", surface, new MappingContext());
 
         // Assert
         await Assert.That(result.Sphere).IsEqualTo(2.5f);
@@ -30,7 +31,7 @@ internal sealed class SurfaceTests
         var surface = new CPlugSurface { Surf = new CPlugSurface.Ellipsoid { Size = new Vec3(1, 2, 3), SurfaceIndex = 4 } };
 
         // Act
-        var result = Surface.From("Egg.Shape.Gbx", surface);
+        var result = Surface.From("Egg.Shape.Gbx", surface, new MappingContext());
 
         // Assert
         await Assert.That(result.Ellipsoid).IsEqualTo(new Vec3(1, 2, 3));
@@ -49,7 +50,7 @@ internal sealed class SurfaceTests
         };
 
         // Act
-        var result = Surface.From(null, surface);
+        var result = Surface.From(null, surface, new MappingContext());
 
         // Assert
         await Assert.That(result.Sphere).IsEqualTo(1);
@@ -66,7 +67,7 @@ internal sealed class SurfaceTests
         };
 
         // Act
-        var result = Surface.From(null, surface);
+        var result = Surface.From(null, surface, new MappingContext());
 
         // Assert
         await Assert.That(Buffers.ToFloats(result.Positions)).IsEquivalentTo([1f, 2f, 3f, 4f, 5f, 6f]);
@@ -88,7 +89,7 @@ internal sealed class SurfaceTests
         };
 
         // Act
-        var result = Surface.From(null, new CPlugSurface { Surf = mesh });
+        var result = Surface.From(null, new CPlugSurface { Surf = mesh }, new MappingContext());
 
         // Assert
         await Assert.That(result.Indices).IsEquivalentTo([7, 0, 1, 2, 8, 2, 1, 0]);
@@ -105,7 +106,7 @@ internal sealed class SurfaceTests
         };
 
         // Act
-        var result = Surface.From(null, new CPlugSurface { Surf = mesh });
+        var result = Surface.From(null, new CPlugSurface { Surf = mesh }, new MappingContext());
 
         // Assert
         await Assert.That(result.Indices).IsEquivalentTo([5, 0, 1, 2]);
@@ -123,7 +124,7 @@ internal sealed class SurfaceTests
         };
 
         // Act
-        var result = Surface.From(null, new CPlugSurface { Surf = mesh });
+        var result = Surface.From(null, new CPlugSurface { Surf = mesh }, new MappingContext());
 
         // Assert
         await Assert.That(result.Indices).IsEquivalentTo([1, 0, 1, 2]);
@@ -141,22 +142,47 @@ internal sealed class SurfaceTests
         var surface = new CPlugSurface { Surf = mesh };
 
         // Act
-        var act = () => Surface.From(null, surface);
+        var act = () => Surface.From(null, surface, new MappingContext());
 
         // Assert
         await Assert.That(act).Throws<Exception>().WithMessageContaining("too many triangles");
     }
 
     [Test]
-    public async Task From_SurfaceWithMaterials_LeavesSurfaceMaterialsToRoot()
+    public async Task From_SurfaceWithMaterials_MapsEachMaterialToSharedList()
     {
         // Arrange
-        var surface = new CPlugSurface { Materials = [SurfMaterials.Create(CPlugSurface.MaterialId.Grass)] };
+        var surface = new CPlugSurface
+        {
+            Materials =
+            [
+                SurfMaterials.Create(CPlugSurface.MaterialId.Ice),
+                SurfMaterials.Create(CPlugSurface.MaterialId.Grass),
+            ],
+        };
+        var context = new MappingContext();
+        context.AddSurfaceMaterial(SurfMaterials.Create(CPlugSurface.MaterialId.Grass));
 
         // Act
-        var result = Surface.From(null, surface);
+        var result = Surface.From(null, surface, context);
 
         // Assert
+        var surfaceIds = context.GetSurfaceMaterials().Select(x => x.SurfaceId).ToList();
+        await Assert.That(surfaceIds).IsEquivalentTo(new CPlugSurface.MaterialId?[] { CPlugSurface.MaterialId.Grass, CPlugSurface.MaterialId.Ice });
+        await Assert.That(result.SurfaceMaterialIndices).IsEquivalentTo([1, 0]);
         await Assert.That(result.SurfaceMaterials).IsNull();
+    }
+
+    [Test]
+    public async Task From_SurfaceWithoutMaterials_LeavesSurfaceMaterialIndicesNull()
+    {
+        // Arrange
+        var surface = new CPlugSurface { Surf = new CPlugSurface.Sphere() };
+
+        // Act
+        var result = Surface.From(null, surface, new MappingContext());
+
+        // Assert
+        await Assert.That(result.SurfaceMaterialIndices).IsNull();
     }
 }

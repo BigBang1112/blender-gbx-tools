@@ -33,7 +33,7 @@ internal sealed record Ent
         return new Ent
         {
             Mesh = mesh is null ? null : Solid2.From("", mesh, context),
-            Surface = shape is null ? null : Surface.From(null, shape),
+            Surface = shape is null ? null : Surface.From(null, shape, context),
             Prefab = ent.Model is CPlugPrefab prefab ? Prefab.From("", prefab, context) : null,
             Position = ent.Position,
             Rotation = ent.Rotation,

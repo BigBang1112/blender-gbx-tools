@@ -1,4 +1,5 @@
-﻿using GBX.NET;
+﻿using BlenderGbxTools.Mapping;
+using GBX.NET;
 using GBX.NET.Engines.Plug;
 using System.Collections.Immutable;
 
@@ -13,13 +14,19 @@ internal sealed record Surface
     public int[]? Indices { get; init; }
     public int? SurfaceIndex { get; init; }
 
+    // Surface indices refer to this surface's own materials, which are mapped to the root SurfaceMaterials by this array
+    public int[]? SurfaceMaterialIndices { get; init; }
+
     // Only set on the root model
     public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; init; }
     public double? ExecutionTimeInSeconds { get; init; }
 
-    public static Surface From(string? fileName, CPlugSurface surface)
+    public static Surface From(string? fileName, CPlugSurface surface, MappingContext context)
     {
         var surf = surface.Geom?.Surf ?? surface.Surf;
+        var surfaceMaterialIndices = surface.Materials.Length == 0
+            ? null
+            : surface.Materials.Select(context.AddSurfaceMaterial).ToArray();
 
         return surf switch
         {
@@ -28,20 +35,23 @@ internal sealed record Surface
                 Name = fileName,
                 Ellipsoid = ellipsoid.Size,
                 SurfaceIndex = ellipsoid.SurfaceIndex,
+                SurfaceMaterialIndices = surfaceMaterialIndices,
             },
             CPlugSurface.Sphere sphere => new Surface
             {
                 Name = fileName,
                 Sphere = sphere.Size,
                 SurfaceIndex = sphere.SurfaceIndex,
+                SurfaceMaterialIndices = surfaceMaterialIndices,
             },
             CPlugSurface.Mesh mesh => new Surface
             {
                 Name = fileName,
                 Positions = GetPositions(mesh),
                 Indices = GetIndices(mesh),
+                SurfaceMaterialIndices = surfaceMaterialIndices,
             },
-            _ => new Surface { Name = fileName },
+            _ => new Surface { Name = fileName, SurfaceMaterialIndices = surfaceMaterialIndices },
         };
     }
 

@@ -83,4 +83,36 @@ internal sealed class MappingContextTests
         await Assert.That(context.GetMaterials()["Grass"]).IsSameReferenceAs(first);
         await Assert.That(createCount).IsEqualTo(0);
     }
+
+    [Test]
+    public async Task AddSurfaceMaterial_SameSurfaceIdAndMaterial_ReturnsSameIndex()
+    {
+        // Arrange
+        var context = new MappingContext();
+        const string grassPath = @"Media\Material\Grass.Material.Gbx";
+
+        // Act
+        var first = context.AddSurfaceMaterial(SurfMaterials.Create(CPlugSurface.MaterialId.Grass, grassPath));
+        var second = context.AddSurfaceMaterial(SurfMaterials.Create(CPlugSurface.MaterialId.Grass, grassPath));
+
+        // Assert
+        await Assert.That(second).IsEqualTo(first);
+        await Assert.That(context.GetSurfaceMaterials()).HasSingleItem();
+    }
+
+    [Test]
+    public async Task AddSurfaceMaterial_SameSurfaceIdDifferentMaterial_ReturnsNewIndex()
+    {
+        // Arrange
+        var context = new MappingContext();
+
+        // Act
+        var first = context.AddSurfaceMaterial(SurfMaterials.Create(CPlugSurface.MaterialId.Grass, @"Media\Material\Grass.Material.Gbx"));
+        var second = context.AddSurfaceMaterial(SurfMaterials.Create(CPlugSurface.MaterialId.Grass, @"Media\Material\GrassDark.Material.Gbx"));
+
+        // Assert
+        await Assert.That(first).IsEqualTo(0);
+        await Assert.That(second).IsEqualTo(1);
+        await Assert.That(context.GetSurfaceMaterials()[1].Name).IsEqualTo("GrassDark");
+    }
 }

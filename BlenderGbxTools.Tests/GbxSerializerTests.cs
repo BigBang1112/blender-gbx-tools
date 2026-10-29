@@ -131,7 +131,7 @@ internal sealed class GbxSerializerTests
     }
 
     [Test]
-    public async Task Serialize_Surface_WritesEverySurfaceMaterialInOrder()
+    public async Task Serialize_SurfaceWithDuplicateMaterials_MapsEveryIndexToItsMaterial()
     {
         // Arrange
         var surface = new CPlugSurface
@@ -149,12 +149,46 @@ internal sealed class GbxSerializerTests
         using var json = Serialize("Ball.Shape.Gbx", surface);
 
         // Assert
-        // Triangles refer to surface materials by index, so duplicates must be kept
-        var surfaceIds = json.RootElement.GetProperty("SurfaceMaterials").EnumerateArray()
-            .Select(x => x.GetProperty("SurfaceId").GetString())
-            .ToList();
-        await Assert.That(surfaceIds).IsEquivalentTo(["Grass", "Grass", "Ice"]);
-        await Assert.That(json.RootElement.TryGetProperty("Materials", out _)).IsFalse();
+        var root = json.RootElement;
+        await Assert.That(root.GetProperty("SurfaceMaterials").GetArrayLength()).IsEqualTo(2);
+        await Assert.That(ResolveSurfaceMaterial(root, root, 1)).IsEqualTo("Grass");
+        await Assert.That(ResolveSurfaceMaterial(root, root, 2)).IsEqualTo("Ice");
+        await Assert.That(root.TryGetProperty("Materials", out _)).IsFalse();
+    }
+
+    [Test]
+    public async Task Serialize_SurfacesWithDifferentMaterialLists_MapEachToItsOwnMaterials()
+    {
+        // Arrange
+        var solid = new CPlugSolid
+        {
+            Tree = new CPlugTree
+            {
+                Children = new(
+                [
+                    new CPlugTree { Surface = new CPlugSurface { Materials = [SurfMaterials.Create(CPlugSurface.MaterialId.Grass)] } },
+                    new CPlugTree
+                    {
+                        Surface = new CPlugSurface
+                        {
+                            Materials = [SurfMaterials.Create(CPlugSurface.MaterialId.Ice), SurfMaterials.Create(CPlugSurface.MaterialId.Grass)],
+                        },
+                    },
+                ]),
+            },
+        };
+
+        // Act
+        using var json = Serialize("Block.Solid.Gbx", solid);
+
+        // Assert
+        var root = json.RootElement;
+        var children = root.GetProperty("Tree").GetProperty("Children");
+        var firstSurface = children[0].GetProperty("Surface");
+        var secondSurface = children[1].GetProperty("Surface");
+        await Assert.That(ResolveSurfaceMaterial(root, firstSurface, 0)).IsEqualTo("Grass");
+        await Assert.That(ResolveSurfaceMaterial(root, secondSurface, 0)).IsEqualTo("Ice");
+        await Assert.That(ResolveSurfaceMaterial(root, secondSurface, 1)).IsEqualTo("Grass");
     }
 
     [Test]
@@ -202,6 +236,13 @@ internal sealed class GbxSerializerTests
         var materials = json.RootElement.GetProperty("Materials");
         await Assert.That(materials.TryGetProperty(solidMaterial!, out _)).IsTrue();
         await Assert.That(materials.TryGetProperty("Dirt", out _)).IsTrue();
+    }
+
+    // Looks up a surface's material the way the Blender plugin does
+    private static string? ResolveSurfaceMaterial(JsonElement root, JsonElement surface, int surfaceIndex)
+    {
+        var sharedIndex = surface.GetProperty("SurfaceMaterialIndices")[surfaceIndex].GetInt32();
+        return root.GetProperty("SurfaceMaterials")[sharedIndex].GetProperty("SurfaceId").GetString();
     }
 
     private static JsonDocument Serialize(string fileName, CMwNod node)

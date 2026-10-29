@@ -1,5 +1,4 @@
-﻿using BlenderGbxTools.Extensions;
-using BlenderGbxTools.Mapping;
+﻿using BlenderGbxTools.Mapping;
 using BlenderGbxTools.Models;
 using GBX.NET.Engines.Game;
 using GBX.NET.Engines.GameData;
@@ -23,7 +22,7 @@ internal static class GbxSerializer
                 JsonSerializer.Serialize(stream, Solid.From(fileName, solid, context) with
                 {
                     Materials = context.GetMaterials(),
-                    SurfaceMaterials = solid.GetAllSurfaceMaterials(),
+                    SurfaceMaterials = context.GetSurfaceMaterials(),
                     ExecutionTimeInSeconds = GetElapsedSeconds(startTime),
                 }, AppJsonContext.Default.Solid);
                 break;
@@ -38,14 +37,14 @@ internal static class GbxSerializer
                 JsonSerializer.Serialize(stream, BlockInfo.From(blockInfo, context) with
                 {
                     Materials = context.GetMaterials(),
-                    SurfaceMaterials = blockInfo.GetAllSurfaceMaterials(),
+                    SurfaceMaterials = context.GetSurfaceMaterials(),
                     ExecutionTimeInSeconds = GetElapsedSeconds(startTime),
                 }, AppJsonContext.Default.BlockInfo);
                 break;
             case CPlugSurface surface:
-                JsonSerializer.Serialize(stream, Surface.From(fileName, surface) with
+                JsonSerializer.Serialize(stream, Surface.From(fileName, surface, context) with
                 {
-                    SurfaceMaterials = surface.GetAllMaterials(),
+                    SurfaceMaterials = context.GetSurfaceMaterials(),
                     ExecutionTimeInSeconds = GetElapsedSeconds(startTime),
                 }, AppJsonContext.Default.Surface);
                 break;
@@ -53,6 +52,7 @@ internal static class GbxSerializer
                 JsonSerializer.Serialize(stream, Item.From(fileName, item, context) with
                 {
                     Materials = context.GetMaterials(),
+                    SurfaceMaterials = context.GetSurfaceMaterials(),
                     ExecutionTimeInSeconds = GetElapsedSeconds(startTime),
                 }, AppJsonContext.Default.Item);
                 break;
@@ -60,7 +60,7 @@ internal static class GbxSerializer
                 JsonSerializer.Serialize(stream, Prefab.From(fileName, prefab, context) with
                 {
                     Materials = context.GetMaterials(),
-                    SurfaceMaterials = prefab.GetAllSurfaceMaterials(),
+                    SurfaceMaterials = context.GetSurfaceMaterials(),
                     ExecutionTimeInSeconds = GetElapsedSeconds(startTime),
                 }, AppJsonContext.Default.Prefab);
                 break;
