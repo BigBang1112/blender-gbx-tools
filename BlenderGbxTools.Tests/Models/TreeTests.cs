@@ -109,7 +109,7 @@ internal sealed class TreeTests
     {
         // Arrange
         var plugTree = new CPlugTree();
-        plugTree.References.Shader.Descriptor = GbxFiles.Create(@"Media\Material\RoadTech.Material.Gbx");
+        plugTree.References.Shader.Descriptor = GbxFiles.Create("Media/Material/RoadTech.Material.Gbx");
 
         // Act
         var tree = Tree.From(plugTree, new MappingContext());

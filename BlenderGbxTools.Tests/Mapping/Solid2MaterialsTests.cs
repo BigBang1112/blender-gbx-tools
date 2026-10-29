@@ -24,7 +24,7 @@ internal sealed class Solid2MaterialsTests
     public static IEnumerable<Func<(CPlugSolid2ModelBuilder, string?)>> MaterialSources()
     {
         // Material file
-        yield return () => (new CPlugSolid2ModelBuilder().WithMaterialFile(@"Media\Material\Asphalt.Material.Gbx"), "Asphalt");
+        yield return () => (new CPlugSolid2ModelBuilder().WithMaterialFile("Media/Material/Asphalt.Material.Gbx"), "Asphalt");
         // Material instance, with and without a name
         yield return () => (new CPlugSolid2ModelBuilder().WithMaterialInst("Wood"), "Wood");
         yield return () => (new CPlugSolid2ModelBuilder().WithMaterialInst("", link: "Stadium/Grass"), "Stadium/Grass");
@@ -42,7 +42,7 @@ internal sealed class Solid2MaterialsTests
     {
         // Arrange
         var solid2 = new CPlugSolid2ModelBuilder()
-            .WithMaterialFile(@"Media\Material\Asphalt.Material.Gbx")
+            .WithMaterialFile("Media/Material/Asphalt.Material.Gbx")
             .WithMaterialInst("Wood")
             .WithMaterialId("Dirt")
             .Build();
@@ -60,8 +60,8 @@ internal sealed class Solid2MaterialsTests
     {
         // Arrange
         var solid2 = new CPlugSolid2ModelBuilder()
-            .WithMaterialFile(@"Media\Material\Asphalt.Material.Gbx", new CPlugMaterial { SurfaceId = CPlugSurface.MaterialId.Pavement })
-            .WithMaterialFile(@"Media\Material\Missing.Material.Gbx")
+            .WithMaterialFile("Media/Material/Asphalt.Material.Gbx", new CPlugMaterial { SurfaceId = CPlugSurface.MaterialId.Pavement })
+            .WithMaterialFile("Media/Material/Missing.Material.Gbx")
             .Build();
         var context = new MappingContext();
 

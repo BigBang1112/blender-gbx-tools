@@ -14,7 +14,7 @@ internal sealed class MappingContextTests
         var context = new MappingContext();
 
         // Act
-        var name = context.GetName(GbxFiles.Create(@"Media\Material\RoadTech.Material.Gbx"), new CPlugMaterial());
+        var name = context.GetName(GbxFiles.Create("Media/Material/RoadTech.Material.Gbx"), new CPlugMaterial());
 
         // Assert
         await Assert.That(name).IsEqualTo("RoadTech");
@@ -89,7 +89,7 @@ internal sealed class MappingContextTests
     {
         // Arrange
         var context = new MappingContext();
-        const string grassPath = @"Media\Material\Grass.Material.Gbx";
+        const string grassPath = "Media/Material/Grass.Material.Gbx";
 
         // Act
         var first = context.AddSurfaceMaterial(SurfMaterials.Create(CPlugSurface.MaterialId.Grass, grassPath));
@@ -107,8 +107,8 @@ internal sealed class MappingContextTests
         var context = new MappingContext();
 
         // Act
-        var first = context.AddSurfaceMaterial(SurfMaterials.Create(CPlugSurface.MaterialId.Grass, @"Media\Material\Grass.Material.Gbx"));
-        var second = context.AddSurfaceMaterial(SurfMaterials.Create(CPlugSurface.MaterialId.Grass, @"Media\Material\GrassDark.Material.Gbx"));
+        var first = context.AddSurfaceMaterial(SurfMaterials.Create(CPlugSurface.MaterialId.Grass, "Media/Material/Grass.Material.Gbx"));
+        var second = context.AddSurfaceMaterial(SurfMaterials.Create(CPlugSurface.MaterialId.Grass, "Media/Material/GrassDark.Material.Gbx"));
 
         // Assert
         await Assert.That(first).IsEqualTo(0);
