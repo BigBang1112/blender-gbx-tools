@@ -1,109 +1,109 @@
-﻿using BlenderGbxTools.Extensions;
-using GBX.NET;
+﻿using GBX.NET;
 using GBX.NET.Engines.Plug;
 using System.Collections.Immutable;
-using System.Diagnostics;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class Surface : IStandalone
+internal sealed record Surface
 {
-    public string? Name { get; }
-    public Vec3? Ellipsoid { get; }
-    public float? Sphere { get; }
-    public byte[]? Positions { get; }
-    public int[]? Indices { get; }
-    public int? SurfaceIndex { get; }
+    public string? Name { get; init; }
+    public Vec3? Ellipsoid { get; init; }
+    public float? Sphere { get; init; }
+    public byte[]? Positions { get; init; }
+    public int[]? Indices { get; init; }
+    public int? SurfaceIndex { get; init; }
 
-    public ImmutableDictionary<string, Material?>? Materials => null;
-    public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; }
+    // Only set on the root model
+    public ImmutableList<SurfaceMaterial>? SurfaceMaterials { get; init; }
+    public double? ExecutionTimeInSeconds { get; init; }
 
-    public double ExecutionTimeInSeconds { get; }
-
-    public Surface()
+    public static Surface From(string? fileName, CPlugSurface surface)
     {
-        
-    }
-
-    public Surface(string? fileName, CPlugSurface surface, bool standalone = true)
-    {
-        var startTime = Stopwatch.GetTimestamp();
-
-        Name = fileName;
-
-        // Materials not in this dictionary use the default material
-        SurfaceMaterials = standalone ? surface.GetAllMaterials() : null;
-
         var surf = surface.Geom?.Surf ?? surface.Surf;
 
-        if (surf is CPlugSurface.Ellipsoid ellipsoid)
+        return surf switch
         {
-            Ellipsoid = ellipsoid.Size;
-            SurfaceIndex = ellipsoid.SurfaceIndex;
+            CPlugSurface.Ellipsoid ellipsoid => new Surface
+            {
+                Name = fileName,
+                Ellipsoid = ellipsoid.Size,
+                SurfaceIndex = ellipsoid.SurfaceIndex,
+            },
+            CPlugSurface.Sphere sphere => new Surface
+            {
+                Name = fileName,
+                Sphere = sphere.Size,
+                SurfaceIndex = sphere.SurfaceIndex,
+            },
+            CPlugSurface.Mesh mesh => new Surface
+            {
+                Name = fileName,
+                Positions = GetPositions(mesh),
+                Indices = GetIndices(mesh),
+            },
+            _ => new Surface { Name = fileName },
+        };
+    }
+
+    private static byte[] GetPositions(CPlugSurface.Mesh mesh)
+    {
+        using var posStream = new MemoryStream();
+        using var posWriter = new BinaryWriter(posStream);
+
+        foreach (var vertex in mesh.Vertices)
+        {
+            posWriter.Write(vertex.X);
+            posWriter.Write(vertex.Y);
+            posWriter.Write(vertex.Z);
         }
 
-        if (surf is CPlugSurface.Sphere sphere)
+        return posStream.ToArray();
+    }
+
+    private static int[]? GetIndices(CPlugSurface.Mesh mesh)
+    {
+        if (mesh.CookedTriangles is not null)
         {
-            Sphere = sphere.Size;
-            SurfaceIndex = sphere.SurfaceIndex;
+            if (mesh.CookedTriangles.Length > ushort.MaxValue)
+            {
+                throw new Exception($"Mesh has too many triangles for ushort indices ({mesh.CookedTriangles.Length} > {ushort.MaxValue})");
+            }
+
+            var inds = new int[mesh.CookedTriangles.Length * 4];
+
+            for (var i = 0; i < mesh.CookedTriangles.Length; i++)
+            {
+                var tri = mesh.CookedTriangles[i];
+                inds[i * 4 + 0] = tri.SurfaceIndex;
+                inds[i * 4 + 1] = tri.Indices.X;
+                inds[i * 4 + 2] = tri.Indices.Y;
+                inds[i * 4 + 3] = tri.Indices.Z;
+            }
+
+            return inds;
         }
 
-        if (surf is CPlugSurface.Mesh mesh)
+        if (mesh.Triangles is not null)
         {
-            using var posStream = new MemoryStream();
-            using var posWriter = new BinaryWriter(posStream);
-
-            foreach (var vertex in mesh.Vertices)
+            if (mesh.Triangles.Length > ushort.MaxValue)
             {
-                posWriter.Write(vertex.X);
-                posWriter.Write(vertex.Y);
-                posWriter.Write(vertex.Z);
+                throw new Exception($"Mesh has too many triangles for ushort indices ({mesh.Triangles.Length} > {ushort.MaxValue})");
             }
 
-            Positions = posStream.ToArray();
+            var inds = new int[mesh.Triangles.Length * 4];
 
-            if (mesh.CookedTriangles is not null)
+            for (var i = 0; i < mesh.Triangles.Length; i++)
             {
-                if (mesh.CookedTriangles.Length > ushort.MaxValue)
-                {
-                    throw new Exception($"Mesh has too many triangles for ushort indices ({mesh.CookedTriangles.Length} > {ushort.MaxValue})");
-                }
-
-                var inds = new int[mesh.CookedTriangles.Length * 4];
-
-                for (var i = 0; i < mesh.CookedTriangles.Length; i++)
-                {
-                    var tri = mesh.CookedTriangles[i];
-                    inds[i * 4 + 0] = tri.SurfaceIndex;
-                    inds[i * 4 + 1] = tri.Indices.X;
-                    inds[i * 4 + 2] = tri.Indices.Y;
-                    inds[i * 4 + 3] = tri.Indices.Z;
-                }
-
-                Indices = inds;
+                var tri = mesh.Triangles[i];
+                inds[i * 4 + 0] = tri.SurfaceIndex;
+                inds[i * 4 + 1] = tri.Indices.X;
+                inds[i * 4 + 2] = tri.Indices.Y;
+                inds[i * 4 + 3] = tri.Indices.Z;
             }
-            else if (mesh.Triangles is not null)
-            {
-                if (mesh.Triangles.Length > ushort.MaxValue)
-                {
-                    throw new Exception($"Mesh has too many triangles for ushort indices ({mesh.Triangles.Length} > {ushort.MaxValue})");
-                }
 
-                var inds = new int[mesh.Triangles.Length * 4];
-
-                for (var i = 0; i < mesh.Triangles.Length; i++)
-                {
-                    var tri = mesh.Triangles[i];
-                    inds[i * 4 + 0] = tri.SurfaceIndex;
-                    inds[i * 4 + 1] = tri.Indices.X;
-                    inds[i * 4 + 2] = tri.Indices.Y;
-                    inds[i * 4 + 3] = tri.Indices.Z;
-                }
-
-                Indices = inds;
-            }
+            return inds;
         }
 
-        ExecutionTimeInSeconds = Stopwatch.GetElapsedTime(startTime).TotalSeconds;
+        return null;
     }
 }

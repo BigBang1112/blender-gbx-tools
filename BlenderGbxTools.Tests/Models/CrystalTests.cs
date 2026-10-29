@@ -1,12 +1,13 @@
-using BlenderGbxTools.Extensions;
+using BlenderGbxTools.Mapping;
+using BlenderGbxTools.Models;
 using GBX.NET.Engines.Plug;
 
-namespace BlenderGbxTools.Tests.Extensions;
+namespace BlenderGbxTools.Tests.Models;
 
-internal sealed class CPlugCrystalExtensionsTests
+internal sealed class CrystalTests
 {
     [Test]
-    public async Task GetAllMaterials_NamedMaterials_KeysByMaterialName()
+    public async Task From_NamedMaterials_AddsMaterialsByName()
     {
         // Arrange
         var crystal = new CPlugCrystal
@@ -17,36 +18,39 @@ internal sealed class CPlugCrystalExtensionsTests
                 CreateMaterial(new CPlugMaterialUserInst { Link = "Stadium/Grass" }),
             ],
         };
+        var context = new MappingContext();
 
         // Act
-        var materials = crystal.GetAllMaterials();
+        Crystal.From(crystal, context);
 
         // Assert
+        var materials = context.GetMaterials();
         await Assert.That(materials.Keys).IsEquivalentTo(["Wood", "Stadium/Grass"]);
         await Assert.That(materials["Wood"]!.SurfaceId).IsEqualTo(CPlugSurface.MaterialId.Wood);
     }
 
     [Test]
-    public async Task GetAllMaterials_UnnamedMaterial_IsSkipped()
+    public async Task From_UnnamedMaterial_IsNotAdded()
     {
         // Arrange
         var crystal = new CPlugCrystal { Materials = [CreateMaterial(new CPlugMaterialUserInst())] };
+        var context = new MappingContext();
 
         // Act
-        var materials = crystal.GetAllMaterials();
+        Crystal.From(crystal, context);
 
         // Assert
-        await Assert.That(materials).IsEmpty();
+        await Assert.That(context.GetMaterials()).IsEmpty();
     }
 
     [Test]
-    public async Task GetAllMaterials_MaterialWithoutUserInst_Throws()
+    public async Task From_MaterialWithoutUserInst_Throws()
     {
         // Arrange
         var crystal = new CPlugCrystal { Materials = [CreateMaterial(userInst: null)] };
 
         // Act
-        var act = () => crystal.GetAllMaterials();
+        var act = () => Crystal.From(crystal, new MappingContext());
 
         // Assert
         await Assert.That(act).Throws<Exception>().WithMessageContaining("Custom material is null");

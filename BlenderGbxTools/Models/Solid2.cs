@@ -1,35 +1,26 @@
-﻿using BlenderGbxTools.Extensions;
+﻿using BlenderGbxTools.Mapping;
 using GBX.NET.Engines.Plug;
 using System.Collections.Immutable;
-using System.Diagnostics;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class Solid2 : IStandalone
+internal sealed record Solid2
 {
-    public string? Name { get; set; }
-    public ImmutableDictionary<string, Material?>? Materials { get; }
-    public ShadedGeom[]? ShadedGeoms { get; set; }
+    public string? Name { get; init; }
+    public ShadedGeom[]? ShadedGeoms { get; init; }
 
-    public double ExecutionTimeInSeconds { get; }
+    // Only set on the root model
+    public ImmutableDictionary<string, Material?>? Materials { get; init; }
+    public double? ExecutionTimeInSeconds { get; init; }
 
-    ImmutableList<SurfaceMaterial>? IStandalone.SurfaceMaterials { get; } = null;
-
-    public Solid2()
+    public static Solid2 From(string fileName, CPlugSolid2Model solid2, MappingContext context)
     {
+        var materials = Solid2Materials.Add(solid2, context);
 
-    }
-
-    public Solid2(string fileName, CPlugSolid2Model solid2, bool standalone = true)
-    {
-        var startTime = Stopwatch.GetTimestamp();
-
-        Name = fileName;
-        ShadedGeoms = solid2.ShadedGeoms?.Select(x => new ShadedGeom(solid2, x)).ToArray();
-
-        // Materials not in this dictionary use the default material
-        Materials = standalone ? solid2.GetAllMaterials() : null;
-
-        ExecutionTimeInSeconds = Stopwatch.GetElapsedTime(startTime).TotalSeconds;
+        return new Solid2
+        {
+            Name = fileName,
+            ShadedGeoms = solid2.ShadedGeoms?.Select(x => ShadedGeom.From(solid2, x, materials)).ToArray(),
+        };
     }
 }

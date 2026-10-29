@@ -9,13 +9,13 @@ namespace BlenderGbxTools.Tests.Models;
 internal sealed class LightTests
 {
     [Test]
-    public async Task Constructor_NoPlugLight_LeavesLightDisabled()
+    public async Task From_NoPlugLight_LeavesLightDisabled()
     {
         // Arrange
         var treeLight = new CPlugTreeLight();
 
         // Act
-        var light = new Light(treeLight);
+        var light = Light.From(treeLight);
 
         // Assert
         await Assert.That(light.Intensity).IsEqualTo(0);
@@ -23,13 +23,13 @@ internal sealed class LightTests
     }
 
     [Test]
-    public async Task Constructor_PlugLightWithoutGxLight_KeepsNightOnly()
+    public async Task From_PlugLightWithoutGxLight_KeepsNightOnly()
     {
         // Arrange
         var treeLight = new CPlugTreeLight { PlugLight = new CPlugLight { NightOnly = true } };
 
         // Act
-        var light = new Light(treeLight);
+        var light = Light.From(treeLight);
 
         // Assert
         await Assert.That(light.NightOnly).IsTrue();
@@ -37,13 +37,13 @@ internal sealed class LightTests
     }
 
     [Test]
-    public async Task Constructor_GxLight_CopiesColorAndIntensity()
+    public async Task From_GxLight_CopiesColorAndIntensity()
     {
         // Arrange
         var treeLight = CreateTreeLight(new GxLightPoint { Color = new Vec3(0.25f, 0.5f, 0.75f), Intensity = 3 });
 
         // Act
-        var light = new Light(treeLight);
+        var light = Light.From(treeLight);
 
         // Assert
         await Assert.That(light.R).IsEqualTo(0.25f);
@@ -54,13 +54,13 @@ internal sealed class LightTests
 
     [Test]
     [MethodDataSource(nameof(GxLightTypes))]
-    public async Task Constructor_GxLightType_MapsToBlenderLightType(GxLight gxLight, LightType expectedType)
+    public async Task From_GxLightType_MapsToBlenderLightType(GxLight gxLight, LightType expectedType)
     {
         // Arrange
         var treeLight = CreateTreeLight(gxLight);
 
         // Act
-        var light = new Light(treeLight);
+        var light = Light.From(treeLight);
 
         // Assert
         await Assert.That(light.Type).IsEqualTo(expectedType);
@@ -74,13 +74,13 @@ internal sealed class LightTests
     }
 
     [Test]
-    public async Task Constructor_PointLight_HasNoRadiusOrAngles()
+    public async Task From_PointLight_HasNoRadiusOrAngles()
     {
         // Arrange
         var treeLight = CreateTreeLight(new GxLightPoint());
 
         // Act
-        var light = new Light(treeLight);
+        var light = Light.From(treeLight);
 
         // Assert
         await Assert.That(light.Radius).IsNull();
@@ -89,13 +89,13 @@ internal sealed class LightTests
     }
 
     [Test]
-    public async Task Constructor_BallLight_SetsRadius()
+    public async Task From_BallLight_SetsRadius()
     {
         // Arrange
         var treeLight = CreateTreeLight(new GxLightBall { Radius = 12 });
 
         // Act
-        var light = new Light(treeLight);
+        var light = Light.From(treeLight);
 
         // Assert
         await Assert.That(light.Radius).IsEqualTo(12);
@@ -103,13 +103,13 @@ internal sealed class LightTests
     }
 
     [Test]
-    public async Task Constructor_SpotLight_SetsRadiusAndAngles()
+    public async Task From_SpotLight_SetsRadiusAndAngles()
     {
         // Arrange
         var treeLight = CreateTreeLight(new GxLightSpot { Radius = 20, AngleInner = 30, AngleOuter = 45 });
 
         // Act
-        var light = new Light(treeLight);
+        var light = Light.From(treeLight);
 
         // Assert
         await Assert.That(light.Radius).IsEqualTo(20);

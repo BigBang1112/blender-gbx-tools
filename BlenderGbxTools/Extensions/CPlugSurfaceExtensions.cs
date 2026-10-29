@@ -9,7 +9,7 @@ internal static class CPlugSurfaceExtensions
     public static ImmutableList<SurfaceMaterial> GetAllMaterials(this CPlugSurface surface)
     {
         return surface.Materials
-            .Select(x => new SurfaceMaterial(x))
+            .Select(SurfaceMaterial.From)
             .ToImmutableList();
     }
 }

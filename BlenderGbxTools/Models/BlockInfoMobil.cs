@@ -1,4 +1,6 @@
-﻿using GBX.NET;
+﻿using BlenderGbxTools.Extensions;
+using BlenderGbxTools.Mapping;
+using GBX.NET;
 using GBX.NET.Engines.Game;
 using GBX.NET.Engines.Plug;
 using GBX.NET.Engines.Scene;
@@ -6,51 +8,47 @@ using System.Collections.Immutable;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class BlockInfoMobil
+internal sealed record BlockInfoMobil
 {
-    public Solid? Solid { get; }
-    public Prefab? Prefab { get; }
-    public ImmutableList<ObjectLink>? ObjectLinks { get; }
-    public Vec3 GeomTranslation { get; }
-    public Vec3 GeomRotation { get; }
+    public Solid? Solid { get; init; }
+    public Prefab? Prefab { get; init; }
+    public ImmutableList<ObjectLink>? ObjectLinks { get; init; }
+    public Vec3 GeomTranslation { get; init; }
+    public Vec3 GeomRotation { get; init; }
 
-    public BlockInfoMobil(CSceneMobil? mobil)
+    public static BlockInfoMobil From(CSceneMobil? mobil, MappingContext context)
     {
         if (mobil is null)
         {
-            return;
+            return new BlockInfoMobil();
         }
 
-        if (mobil.Item?.Solid?.Model is CPlugSolid solid)
+        var solid = default(Solid);
+
+        if (mobil.Item?.Solid?.Model is CPlugSolid plugSolid)
         {
-            var modelFile = mobil.Item.Solid.References.Model.File;
-            var fileName = modelFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(modelFile.GetFullPath());
-            Solid = new Solid(fileName, solid, standalone: false);
+            solid = Solid.From(mobil.Item.Solid.References.Model.File.GetFileNameOrUniqueName(), plugSolid, context);
         }
 
-        ObjectLinks = mobil
-            .ObjectLink?
-            .Select(x => new ObjectLink(x))
-            .ToImmutableList();
+        return new BlockInfoMobil
+        {
+            Solid = solid,
+            ObjectLinks = mobil.ObjectLink?.Select(x => ObjectLink.From(x, context)).ToImmutableList(),
+        };
     }
 
-    public BlockInfoMobil(CGameCtnBlockInfoMobil mobil)
+    public static BlockInfoMobil From(CGameCtnBlockInfoMobil mobil, MappingContext context)
     {
-        if (mobil.SolidFid is not null)
+        return new BlockInfoMobil
         {
-            var solidFile = mobil.References.SolidFid.File;
-            var fileName = solidFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(solidFile.GetFullPath());
-            Solid = new Solid(fileName, mobil.SolidFid, standalone: false);
-        }
-
-        if (mobil.PrefabFid is not null)
-        {
-            var prefabFile = mobil.References.PrefabFid.File;
-            var fileName = prefabFile is null ? Guid.NewGuid().ToString() : Path.GetFileName(prefabFile.GetFullPath());
-            Prefab ??= new Prefab(fileName, mobil.PrefabFid, standalone: false);
-        }
-
-        GeomTranslation = mobil.GeomTranslation;
-        GeomRotation = mobil.GeomRotation;
+            Solid = mobil.SolidFid is null
+                ? null
+                : Solid.From(mobil.References.SolidFid.File.GetFileNameOrUniqueName(), mobil.SolidFid, context),
+            Prefab = mobil.PrefabFid is null
+                ? null
+                : Prefab.From(mobil.References.PrefabFid.File.GetFileNameOrUniqueName(), mobil.PrefabFid, context),
+            GeomTranslation = mobil.GeomTranslation,
+            GeomRotation = mobil.GeomRotation,
+        };
     }
 }

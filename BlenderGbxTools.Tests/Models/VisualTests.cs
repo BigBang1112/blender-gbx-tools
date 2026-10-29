@@ -8,13 +8,13 @@ namespace BlenderGbxTools.Tests.Models;
 internal sealed class VisualTests
 {
     [Test]
-    public async Task Constructor_EmptyVisual_LeavesBuffersNull()
+    public async Task From_EmptyVisual_LeavesBuffersNull()
     {
         // Arrange
         var plugVisual = new CPlugVisualIndexed();
 
         // Act
-        var visual = new Visual(plugVisual);
+        var visual = Visual.From(plugVisual);
 
         // Assert
         await Assert.That(visual.Vertices).IsNull();
@@ -24,7 +24,7 @@ internal sealed class VisualTests
     }
 
     [Test]
-    public async Task Constructor_LegacyVertices_WritesPositionsAndNormalsAsFloats()
+    public async Task From_LegacyVertices_WritesPositionsAndNormalsAsFloats()
     {
         // Arrange
         var plugVisual = new CPlugVisualIndexed
@@ -37,7 +37,7 @@ internal sealed class VisualTests
         };
 
         // Act
-        var visual = new Visual(plugVisual);
+        var visual = Visual.From(plugVisual);
 
         // Assert
         await Assert.That(Buffers.ToFloats(visual.Vertices)).IsEquivalentTo([1f, 2f, 3f, 4f, 5f, 6f]);
@@ -45,7 +45,7 @@ internal sealed class VisualTests
     }
 
     [Test]
-    public async Task Constructor_LegacyVerticesWithoutNormals_LeavesNormalsNull()
+    public async Task From_LegacyVerticesWithoutNormals_LeavesNormalsNull()
     {
         // Arrange
         var plugVisual = new CPlugVisualIndexed
@@ -54,7 +54,7 @@ internal sealed class VisualTests
         };
 
         // Act
-        var visual = new Visual(plugVisual);
+        var visual = Visual.From(plugVisual);
 
         // Assert
         await Assert.That(visual.Vertices).IsNotNull();
@@ -62,20 +62,20 @@ internal sealed class VisualTests
     }
 
     [Test]
-    public async Task Constructor_IndexBuffer_CopiesIndices()
+    public async Task From_IndexBuffer_CopiesIndices()
     {
         // Arrange
         var plugVisual = new CPlugVisualIndexed { IndexBuffer = new CPlugIndexBuffer { Indices = [0, 1, 2, 2, 1, 3] } };
 
         // Act
-        var visual = new Visual(plugVisual);
+        var visual = Visual.From(plugVisual);
 
         // Assert
         await Assert.That(visual.Indices).IsEquivalentTo([0, 1, 2, 2, 1, 3]);
     }
 
     [Test]
-    public async Task Constructor_LegacyTexCoordSets_WritesOneUvBufferPerSet()
+    public async Task From_LegacyTexCoordSets_WritesOneUvBufferPerSet()
     {
         // Arrange
         var plugVisual = new CPlugVisualIndexed
@@ -88,7 +88,7 @@ internal sealed class VisualTests
         };
 
         // Act
-        var visual = new Visual(plugVisual);
+        var visual = Visual.From(plugVisual);
 
         // Assert
         await Assert.That(visual.TexCoords!).Count().IsEqualTo(2);

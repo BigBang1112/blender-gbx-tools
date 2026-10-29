@@ -1,4 +1,4 @@
-﻿using BlenderGbxTools.Extensions;
+﻿using BlenderGbxTools.Mapping;
 using GBX.NET;
 using GBX.NET.Engines.Plug;
 using System.Collections.Immutable;
@@ -6,67 +6,51 @@ using System.Runtime.InteropServices;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class Tree
+internal sealed record Tree
 {
-    public string? Name { get; }
-    public Visual? Visual { get; }
-    public byte[]? Location { get; }
-    public ImmutableList<Tree>? Children { get; }
-    public ulong? Flags { get; }
-    public ImmutableDictionary<float, Tree>? VisualMip { get; }
-    public Light? Light { get; }
-    public Surface? Surface { get; }
-    public string? Material { get; }
-    public bool Visible { get; }
+    public string? Name { get; init; }
+    public Visual? Visual { get; init; }
+    public byte[]? Location { get; init; }
+    public ImmutableList<Tree>? Children { get; init; }
+    public ulong? Flags { get; init; }
+    public ImmutableDictionary<float, Tree>? VisualMip { get; init; }
+    public Light? Light { get; init; }
+    public Surface? Surface { get; init; }
+    public string? Material { get; init; }
+    public bool Visible { get; init; }
 
-    public Tree()
+    public static Tree From(CPlugTree tree, MappingContext context)
     {
-        
-    }
-
-    public Tree(CPlugTree tree)
-    {
-        var visual = default(Visual);
-
-        if (tree.Visual is CPlugVisualIndexed visualIndexed)
-        {
-            visual = new Visual(visualIndexed);
-        }
-
-        var mipDict = default(ImmutableDictionary<float, Tree>);
+        var visualMip = default(ImmutableDictionary<float, Tree>);
 
         if (tree is CPlugTreeVisualMip mip)
         {
-            mipDict = mip.Levels
+            visualMip = mip.Levels
                 .Where(x => x.Tree is not null)
                 .DistinctBy(x => x.FarZ) // FarZ can be duplicated sometimes, epic Nadeo. should be additionally logged
-                .ToImmutableDictionary(x => x.FarZ, x => new Tree(x.Tree!));
+                .ToImmutableDictionary(x => x.FarZ, x => From(x.Tree!, context));
         }
 
-        var light = default(Light);
+        var material = context.GetName(tree.References.Shader.File, tree.Shader);
 
-        if (tree is CPlugTreeLight treeLight)
+        if (material is not null && tree.Shader is CPlugMaterial plugMaterial)
         {
-            light = new Light(treeLight);
+            context.AddMaterial(material, () => Models.Material.From(plugMaterial));
         }
 
-        var surface = default(Surface);
-
-        if (tree.Surface is CPlugSurface plugSurface)
+        return new Tree
         {
-            surface = new Surface(null, plugSurface, standalone: false);
-        }
-
-        Name = tree.PlugId ?? "[unnamed]";
-        Visual = visual;
-        Location = LocationToByteArray(tree);
-        Children = tree.Children is not { Count: > 0 } ? null : tree.Children.Select(x => new Tree(x)).ToImmutableList();
-        VisualMip = mipDict;
-        Flags = tree.Flags;
-        Light = light;
-        Material = tree.GetMaterialName();
-        Surface = surface;
-        Visible = tree.IsVisible;
+            Name = tree.PlugId ?? "[unnamed]",
+            Visual = tree.Visual is CPlugVisualIndexed visualIndexed ? Visual.From(visualIndexed) : null,
+            Location = LocationToByteArray(tree),
+            Children = tree.Children is not { Count: > 0 } ? null : tree.Children.Select(x => From(x, context)).ToImmutableList(),
+            VisualMip = visualMip,
+            Flags = tree.Flags,
+            Light = tree is CPlugTreeLight treeLight ? Light.From(treeLight) : null,
+            Material = material,
+            Surface = tree.Surface is CPlugSurface plugSurface ? Surface.From(null, plugSurface) : null,
+            Visible = tree.IsVisible,
+        };
     }
 
     private static byte[]? LocationToByteArray(CPlugTree tree)

@@ -3,20 +3,15 @@ using System.Runtime.InteropServices;
 
 namespace BlenderGbxTools.Models;
 
-internal sealed class Visual
+internal sealed record Visual
 {
-    public byte[]? Vertices { get; }
-    public int[]? Indices { get; }
-    public byte[]? Normals { get; }
-    public byte[]? Colors { get; }
-    public byte[][]? TexCoords { get; }
+    public byte[]? Vertices { get; init; }
+    public int[]? Indices { get; init; }
+    public byte[]? Normals { get; init; }
+    public byte[]? Colors { get; init; }
+    public byte[][]? TexCoords { get; init; }
 
-    public Visual()
-    {
-        
-    }
-
-    public Visual(CPlugVisualIndexed visual)
+    public static Visual From(CPlugVisualIndexed visual)
     {
         using var vertexStream = new MemoryStream();
         using var vertexWriter = new BinaryWriter(vertexStream);
@@ -61,7 +56,7 @@ internal sealed class Visual
                     normalWriter.Write(normal.Y);
                     normalWriter.Write(normal.Z);
                 }
-                
+
                 if (stream.Colors.ContainsKey(0))
                 {
                     foreach (var color in stream.Colors[0] ?? [])
@@ -69,20 +64,27 @@ internal sealed class Visual
                         colorWriter.Write(color);
                     }
                 }
-                
+
             }
         }
 
         var indices = visual.IndexBuffer?.Indices ?? [];
 
-        Vertices = vertexStream.Length == 0 ? null : vertexStream.ToArray();
-        Indices = indices.Length == 0 ? null : indices;
-        Normals = normalStream.Length == 0 ? null : normalStream.ToArray();
-        Colors = colorStream.Length == 0 ? null : colorStream.ToArray();
+        return new Visual
+        {
+            Vertices = vertexStream.Length == 0 ? null : vertexStream.ToArray(),
+            Indices = indices.Length == 0 ? null : indices,
+            Normals = normalStream.Length == 0 ? null : normalStream.ToArray(),
+            Colors = colorStream.Length == 0 ? null : colorStream.ToArray(),
+            TexCoords = GetTexCoords(visual),
+        };
+    }
 
+    private static byte[][] GetTexCoords(CPlugVisualIndexed visual)
+    {
         if (visual.VertexStreams.Count == 0)
         {
-            TexCoords = visual.TexCoords.Select(set =>
+            return visual.TexCoords.Select(set =>
             {
                 using var uvStream = new MemoryStream();
                 using var uvWriter = new BinaryWriter(uvStream);
@@ -96,12 +98,10 @@ internal sealed class Visual
                 return uvStream.ToArray();
             }).ToArray();
         }
-        else
+
+        return visual.VertexStreams[0].UVs.Select(uvSet =>
         {
-            TexCoords = visual.VertexStreams[0].UVs.Select(uvSet =>
-            {
-                return MemoryMarshal.AsBytes(uvSet.Value).ToArray();
-            }).ToArray();
-        }
+            return MemoryMarshal.AsBytes(uvSet.Value).ToArray();
+        }).ToArray();
     }
 }

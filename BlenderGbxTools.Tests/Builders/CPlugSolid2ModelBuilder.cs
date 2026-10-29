@@ -37,9 +37,6 @@ internal sealed class CPlugSolid2ModelBuilder
         return this;
     }
 
-    /// <summary>
-    /// Adds a visual and a shaded geom that draws it with the material at <paramref name="materialIndex"/>.
-    /// </summary>
     public CPlugSolid2ModelBuilder WithShadedGeom(CPlugVisual? visual, int materialIndex = 0, int lod = 0)
     {
         visuals.Add(new NodeRef<CPlugVisual> { Node = visual });

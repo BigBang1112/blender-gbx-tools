@@ -8,13 +8,13 @@ namespace BlenderGbxTools.Tests.Models;
 internal sealed class SurfaceTests
 {
     [Test]
-    public async Task Constructor_SphereSurf_SetsSphereSizeAndSurfaceIndex()
+    public async Task From_SphereSurf_SetsSphereSizeAndSurfaceIndex()
     {
         // Arrange
         var surface = new CPlugSurface { Surf = new CPlugSurface.Sphere { Size = 2.5f, SurfaceIndex = 3 } };
 
         // Act
-        var result = new Surface("Ball.Shape.Gbx", surface);
+        var result = Surface.From("Ball.Shape.Gbx", surface);
 
         // Assert
         await Assert.That(result.Sphere).IsEqualTo(2.5f);
@@ -24,13 +24,13 @@ internal sealed class SurfaceTests
     }
 
     [Test]
-    public async Task Constructor_EllipsoidSurf_SetsEllipsoidSizeAndSurfaceIndex()
+    public async Task From_EllipsoidSurf_SetsEllipsoidSizeAndSurfaceIndex()
     {
         // Arrange
         var surface = new CPlugSurface { Surf = new CPlugSurface.Ellipsoid { Size = new Vec3(1, 2, 3), SurfaceIndex = 4 } };
 
         // Act
-        var result = new Surface("Egg.Shape.Gbx", surface);
+        var result = Surface.From("Egg.Shape.Gbx", surface);
 
         // Assert
         await Assert.That(result.Ellipsoid).IsEqualTo(new Vec3(1, 2, 3));
@@ -39,7 +39,7 @@ internal sealed class SurfaceTests
     }
 
     [Test]
-    public async Task Constructor_GeomSurfAndSurf_PrefersGeomSurf()
+    public async Task From_GeomSurfAndSurf_PrefersGeomSurf()
     {
         // Arrange
         var surface = new CPlugSurface
@@ -49,7 +49,7 @@ internal sealed class SurfaceTests
         };
 
         // Act
-        var result = new Surface(null, surface);
+        var result = Surface.From(null, surface);
 
         // Assert
         await Assert.That(result.Sphere).IsEqualTo(1);
@@ -57,7 +57,7 @@ internal sealed class SurfaceTests
     }
 
     [Test]
-    public async Task Constructor_MeshSurf_WritesVertexPositionsAsFloats()
+    public async Task From_MeshSurf_WritesVertexPositionsAsFloats()
     {
         // Arrange
         var surface = new CPlugSurface
@@ -66,7 +66,7 @@ internal sealed class SurfaceTests
         };
 
         // Act
-        var result = new Surface(null, surface);
+        var result = Surface.From(null, surface);
 
         // Assert
         await Assert.That(Buffers.ToFloats(result.Positions)).IsEquivalentTo([1f, 2f, 3f, 4f, 5f, 6f]);
@@ -74,7 +74,7 @@ internal sealed class SurfaceTests
     }
 
     [Test]
-    public async Task Constructor_MeshWithCookedTriangles_WritesSurfaceIndexThenVertexIndices()
+    public async Task From_MeshWithCookedTriangles_WritesSurfaceIndexThenVertexIndices()
     {
         // Arrange
         var mesh = new CPlugSurface.Mesh
@@ -88,14 +88,14 @@ internal sealed class SurfaceTests
         };
 
         // Act
-        var result = new Surface(null, new CPlugSurface { Surf = mesh });
+        var result = Surface.From(null, new CPlugSurface { Surf = mesh });
 
         // Assert
         await Assert.That(result.Indices).IsEquivalentTo([7, 0, 1, 2, 8, 2, 1, 0]);
     }
 
     [Test]
-    public async Task Constructor_MeshWithOnlyTriangles_WritesSurfaceIndexThenVertexIndices()
+    public async Task From_MeshWithOnlyTriangles_WritesSurfaceIndexThenVertexIndices()
     {
         // Arrange
         var mesh = new CPlugSurface.Mesh
@@ -105,14 +105,14 @@ internal sealed class SurfaceTests
         };
 
         // Act
-        var result = new Surface(null, new CPlugSurface { Surf = mesh });
+        var result = Surface.From(null, new CPlugSurface { Surf = mesh });
 
         // Assert
         await Assert.That(result.Indices).IsEquivalentTo([5, 0, 1, 2]);
     }
 
     [Test]
-    public async Task Constructor_MeshWithCookedTrianglesAndTriangles_PrefersCookedTriangles()
+    public async Task From_MeshWithCookedTrianglesAndTriangles_PrefersCookedTriangles()
     {
         // Arrange
         var mesh = new CPlugSurface.Mesh
@@ -123,14 +123,14 @@ internal sealed class SurfaceTests
         };
 
         // Act
-        var result = new Surface(null, new CPlugSurface { Surf = mesh });
+        var result = Surface.From(null, new CPlugSurface { Surf = mesh });
 
         // Assert
         await Assert.That(result.Indices).IsEquivalentTo([1, 0, 1, 2]);
     }
 
     [Test]
-    public async Task Constructor_MeshWithMoreTrianglesThanUShortMax_Throws()
+    public async Task From_MeshWithMoreTrianglesThanUShortMax_Throws()
     {
         // Arrange
         var mesh = new CPlugSurface.Mesh
@@ -141,38 +141,20 @@ internal sealed class SurfaceTests
         var surface = new CPlugSurface { Surf = mesh };
 
         // Act
-        var act = () => new Surface(null, surface);
+        var act = () => Surface.From(null, surface);
 
         // Assert
         await Assert.That(act).Throws<Exception>().WithMessageContaining("too many triangles");
     }
 
     [Test]
-    public async Task Constructor_Standalone_MapsSurfaceMaterials()
-    {
-        // Arrange
-        var surface = new CPlugSurface
-        {
-            Materials = [SurfMaterials.Create(CPlugSurface.MaterialId.Grass, @"Media\Material\Grass.Material.Gbx")],
-        };
-
-        // Act
-        var result = new Surface(null, surface);
-
-        // Assert
-        await Assert.That(result.SurfaceMaterials).HasSingleItem();
-        await Assert.That(result.SurfaceMaterials![0].SurfaceId).IsEqualTo(CPlugSurface.MaterialId.Grass);
-        await Assert.That(result.SurfaceMaterials[0].Name).IsEqualTo("Grass");
-    }
-
-    [Test]
-    public async Task Constructor_NotStandalone_LeavesSurfaceMaterialsToParent()
+    public async Task From_SurfaceWithMaterials_LeavesSurfaceMaterialsToRoot()
     {
         // Arrange
         var surface = new CPlugSurface { Materials = [SurfMaterials.Create(CPlugSurface.MaterialId.Grass)] };
 
         // Act
-        var result = new Surface(null, surface, standalone: false);
+        var result = Surface.From(null, surface);
 
         // Assert
         await Assert.That(result.SurfaceMaterials).IsNull();

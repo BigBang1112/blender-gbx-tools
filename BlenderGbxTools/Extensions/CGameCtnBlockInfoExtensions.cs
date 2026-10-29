@@ -41,35 +41,17 @@ internal static class CGameCtnBlockInfoExtensions
             .OfType<CPlugPrefab>() ?? [];
     }
 
-    public static ImmutableDictionary<string, Material?> GetAllMaterials(this CGameCtnBlockInfo blockInfo)
-    {
-        // This only resolves materials with recognized Material.Gbx/Shader.Gbx
-        var solidMaterials = blockInfo.GetAllSolids()
-            .SelectMany(x => x.GetDistinctMaterialTrees())
-            .DistinctBy(tree => tree.GetMaterialName())
-            .ToImmutableDictionary(tree => tree.GetMaterialName(), tree => tree.Shader is null ? null : new Material((CPlugMaterial)tree.Shader));
-
-        var prefabMaterials = blockInfo.GetAllPrefabs()
-            .SelectMany(prefab => prefab.GetAllMaterials())
-            .DistinctBy(matPair => matPair.Key)
-            .ToImmutableDictionary(matPair => matPair.Key, matPair => matPair.Value);
-
-        return solidMaterials
-            .Concat(prefabMaterials)
-            .ToImmutableDictionary(kvp => kvp.Key, kvp => kvp.Value);
-    }
-
     public static ImmutableList<SurfaceMaterial> GetAllSurfaceMaterials(this CGameCtnBlockInfo blockInfo)
     {
         var solidSurfaceMaterials = blockInfo.GetAllSolids()
             .SelectMany(x => x.GetDistinctSurfaceMaterials())
             .DistinctBy(surfMat => new { surfMat.SurfaceId, MaterialName = GbxPath.GetFileNameWithoutExtension(surfMat.References.Material.File?.FilePath) })
-            .Select(surfMat => new SurfaceMaterial(surfMat));
+            .Select(SurfaceMaterial.From);
 
         var prefabSurfaceMaterials = blockInfo.GetAllPrefabs()
             .SelectMany(prefab => prefab.GetDistinctSurfaceMaterials())
             .DistinctBy(surfMat => new { surfMat.SurfaceId, MaterialName = GbxPath.GetFileNameWithoutExtension(surfMat.References.Material.File?.FilePath) })
-            .Select(surfMat => new SurfaceMaterial(surfMat));
+            .Select(SurfaceMaterial.From);
 
         return solidSurfaceMaterials
             .Concat(prefabSurfaceMaterials) // no need to distinct cuz prefabs and solids won't overlap

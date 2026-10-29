@@ -1,3 +1,4 @@
+using BlenderGbxTools.Mapping;
 using BlenderGbxTools.Models;
 using BlenderGbxTools.Tests.Builders;
 using GBX.NET.Engines.GameData;
@@ -8,26 +9,27 @@ namespace BlenderGbxTools.Tests.Models;
 internal sealed class ItemTests
 {
     [Test]
-    public async Task Constructor_CrystalItem_TakesMaterialsFromCrystal()
+    public async Task From_CrystalItem_AddsCrystalMaterials()
     {
         // Arrange
         var item = new CGameItemModel
         {
             EntityModelEdition = new CGameCommonItemEntityModelEdition { MeshCrystal = CreateCrystal("Wood") },
         };
+        var context = new MappingContext();
 
         // Act
-        var result = new Item("Ramp.Item.Gbx", item);
+        var result = Item.From("Ramp.Item.Gbx", item, context);
 
         // Assert
         await Assert.That(result.Name).IsEqualTo("Ramp.Item.Gbx");
         await Assert.That(result.Crystal).IsNotNull();
         await Assert.That(result.Prefab).IsNull();
-        await Assert.That(result.Materials!.Keys).IsEquivalentTo(["Wood"]);
+        await Assert.That(context.GetMaterials().Keys).IsEquivalentTo(["Wood"]);
     }
 
     [Test]
-    public async Task Constructor_PrefabItem_MapsPrefabWithoutOwnMaterials()
+    public async Task From_PrefabItem_MapsPrefabAndAddsItsMaterials()
     {
         // Arrange
         var item = new CGameItemModel
@@ -36,18 +38,19 @@ internal sealed class ItemTests
                 .WithStaticObject(mesh: new CPlugSolid2ModelBuilder().WithMaterialId("Dirt").Build())
                 .Build(),
         };
+        var context = new MappingContext();
 
         // Act
-        var result = new Item("Tree.Item.Gbx", item);
+        var result = Item.From("Tree.Item.Gbx", item, context);
 
         // Assert
         await Assert.That(result.Prefab!.Ents).HasSingleItem();
         await Assert.That(result.Prefab.Materials).IsNull();
-        await Assert.That(result.Materials!.Keys).IsEquivalentTo(["Dirt"]);
+        await Assert.That(context.GetMaterials().Keys).IsEquivalentTo(["Dirt"]);
     }
 
     [Test]
-    public async Task Constructor_CrystalAndPrefab_TakesMaterialsFromPrefab()
+    public async Task From_CrystalAndPrefab_AddsMaterialsOfBoth()
     {
         // Arrange
         var item = new CGameItemModel
@@ -57,28 +60,13 @@ internal sealed class ItemTests
                 .WithStaticObject(mesh: new CPlugSolid2ModelBuilder().WithMaterialId("Dirt").Build())
                 .Build(),
         };
+        var context = new MappingContext();
 
         // Act
-        var result = new Item("Mixed.Item.Gbx", item);
+        Item.From("Mixed.Item.Gbx", item, context);
 
         // Assert
-        await Assert.That(result.Materials!.Keys).IsEquivalentTo(["Dirt"]);
-    }
-
-    [Test]
-    public async Task Constructor_NotStandalone_LeavesMaterialsToParent()
-    {
-        // Arrange
-        var item = new CGameItemModel
-        {
-            EntityModelEdition = new CGameCommonItemEntityModelEdition { MeshCrystal = CreateCrystal("Wood") },
-        };
-
-        // Act
-        var result = new Item("Ramp.Item.Gbx", item, standalone: false);
-
-        // Assert
-        await Assert.That(result.Materials).IsNull();
+        await Assert.That(context.GetMaterials().Keys).IsEquivalentTo(["Wood", "Dirt"]);
     }
 
     private static CPlugCrystal CreateCrystal(string materialName)

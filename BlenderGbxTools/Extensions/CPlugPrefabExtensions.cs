@@ -7,56 +7,6 @@ namespace BlenderGbxTools.Extensions;
 
 internal static class CPlugPrefabExtensions
 {
-    public static ImmutableDictionary<string, Material?> GetAllMaterials(this CPlugPrefab prefab)
-    {
-        var materials = ImmutableDictionary.CreateBuilder<string, Material?>();
-
-        foreach (var ent in prefab.Ents)
-        {
-            var mesh = default(CPlugSolid2Model);
-
-            if (ent.Model is CPlugStaticObjectModel solid)
-            {
-                mesh = solid.Mesh;
-            }
-            else if (ent.Model is CPlugDynaObjectModel dynaSolid)
-            {
-                mesh = dynaSolid.Mesh;
-            }
-            else if (ent.Model is CPlugPrefab innerPrefab)
-            {
-                var innerMaterials = innerPrefab.GetAllMaterials();
-                foreach (var kvp in innerMaterials)
-                {
-                    if (!materials.ContainsKey(kvp.Key))
-                    {
-                        materials.Add(kvp.Key, kvp.Value);
-                    }
-                }
-            }
-            else
-            {
-                continue;
-            }
-            if (mesh is null)
-            {
-                continue;
-            }
-
-            var meshMaterials = mesh.GetAllMaterials();
-
-            foreach (var kvp in meshMaterials)
-            {
-                if (!materials.ContainsKey(kvp.Key))
-                {
-                    materials.Add(kvp.Key, kvp.Value);
-                }
-            }
-        }
-
-        return materials.ToImmutable();
-    }
-
     public static IEnumerable<CPlugSurface.SurfMaterial> GetDistinctSurfaceMaterials(this CPlugPrefab prefab)
     {
         var materials = new List<CPlugSurface.SurfMaterial>();
@@ -96,7 +46,7 @@ internal static class CPlugPrefabExtensions
     public static ImmutableList<SurfaceMaterial> GetAllSurfaceMaterials(this CPlugPrefab prefab)
     {
         return prefab.GetDistinctSurfaceMaterials()
-            .Select(x => new SurfaceMaterial(x))
+            .Select(SurfaceMaterial.From)
             .ToImmutableList();
     }
 }
