@@ -15,4 +15,8 @@
 		<PackageReference Include="GBX.NET.LZO" Version="2.1.6" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="BlenderGbxTools.Tests" />
+	</ItemGroup>
+
 </Project>

@@ -2,7 +2,7 @@
   "profiles": {
     "BlenderGbxTools": {
       "commandName": "Project",
-      "commandLineArgs": ""
+      "commandLineArgs": "\"D:\\GbxTools\\Dataset\\TM2020\\Skins\\Models\\CarSport\\Stadium\\Standard\\MainBody.Mesh.gbx\""
     }
   }
 }
